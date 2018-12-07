@@ -68,12 +68,13 @@ if(isset($_SESSION["user_name"]) && isset($_SESSION["user_type_desc"])) header("
                 // Sending a check request
                 $.post(current_web_location + "/services/user_login.php", {
                     username: $("#login-input-username").val(),
-                    password: $("#login-input-password").val()
+                    password: $("#login-input-password").val(),
+					device: "WEB"
                 }, function(data, status) {
                     if(data.includes("สำเร็จ")) {
                         $("#login-alert-message").removeClass("alert-danger").addClass("alert-success");
                         $("#login-alert-message").html("<b>" + data + "</b>");
-                        window.location.replace("index.php");
+                        window.location.href = current_web_location + "/index.php";
                     } else {
                         $("#login-alert-message").html("<b>" + data + "</b>");
                         $("#login-alert-message").removeClass("d-none");

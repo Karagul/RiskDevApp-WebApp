@@ -4,16 +4,21 @@ $settings_os = strtoupper(php_uname("s"));
 // Database Handler
 $hostname = "localhost";
 $username = "riskdevapp";
-$password = "riskdevapp";
+$password = "riskdevapp2018";
 $database = "riskdevapp";
 $charset  = "utf8mb4";
 
-$server_path = "http://localhost/riskdevapp-web";
+$server_path = "http://164.115.23.67/riskdevapp-webapp";
+session_save_path("C:\\WebApp\\eSmart\\RiskDevApp-WebApp\\temp");
+
+//beg+++iKS20.11.2018 Enforcing UTF-8 encoding
+header("Content-type: text/html; charset=utf-8");
+//end+++iKS20.11.2018 Enforcing UTF-8 encoding
 
 // Determining database driver from OS
 if(substr($settings_os, 0, 3) == "WIN") {
     // Assume SQL Server
-    $conn_str = "sqlsrv:Server=$hostname\\SQLEXPRESS;Database=$database";
+    $conn_str = "sqlsrv:Server=$hostname;Database=$database";
 } else {
     // Assume MySQL
     $conn_str = "mysql:host=$hostname;dbname=$database;charset=$charset";

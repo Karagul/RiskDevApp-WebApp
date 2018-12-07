@@ -59,8 +59,8 @@ function file_upload($bool_return_json) {
                     $file_check_result = $file_check_query->fetchAll();
                     if(count($file_check_result) > 0) die("ไฟล์อัพโหลดสำเร็จ");
                     else die("ไม่สามารถอัพโหลดไฟล์ได้ในขณะนี้ กรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ");
-                }
-            }
+                } else die(var_dump($file_check_query->errorInfo()));
+            } else die(var_dump($file_upload_query->errorInfo()));
         } else die("ไม่สามารถอัพโหลดไฟล์ได้ในขณะนี้ กรุณาลองใหม่อีกครั้งหรือติดต่อผู้ดูแลระบบ");
     }
 }

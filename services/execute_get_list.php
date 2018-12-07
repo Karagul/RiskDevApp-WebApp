@@ -9,10 +9,10 @@ function execute_get_list($bool_return_json) {
     $execute_list_query = $db_conn->prepare("SELECT result_type_name, execute_type_desc, execute_date, execute_first_date,
                                                     result_status_name, execute_status_desc
                                                FROM result_nipah
-                                               JOIN result_type ON result_type_name = result_type.execute_type_name
-                                               JOIN result_status ON result_status_name = result_status.execute_status_name
-                                              WHERE result_status.execute_status_name = 'READY'
-                                              GROUP BY execute_id");
+                                               JOIN result_type ON result_nipah.result_type_name = result_type.execute_type_name
+                                               JOIN result_status ON result_nipah.result_status_name = result_status.execute_status_name
+                                              GROUP BY execute_id, result_type_name, execute_type_desc, execute_date, execute_first_date,
+													   result_status_name, execute_status_desc");
     if($execute_list_query->execute()) {
         $execute_list_result = $execute_list_query->fetchAll();
         $execute_list_array = array();
@@ -30,6 +30,6 @@ function execute_get_list($bool_return_json) {
             if($bool_return_json) return json_encode($execute_list_array);
             else return $execute_list_array;
         }
-    }
+    } else die(var_dump($execute_list_query->errorInfo()));
 }
 ?>

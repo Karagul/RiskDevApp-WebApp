@@ -5,5 +5,5 @@ require_once dirname(__FILE__)."/../config.php";
 session_start();
 session_destroy();
 echo "ออกจากระบบสำเร็จ";
-header("Location: ../index.php");
+header("Location: ".$server_path."/login.php");
 ?>

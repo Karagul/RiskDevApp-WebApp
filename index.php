@@ -4,8 +4,10 @@ require_once dirname(__FILE__)."/services/file_get_list.php";
 require_once dirname(__FILE__)."/services/file_get_type.php";
 
 // Session check
+//beg+++dKS20.11.2018 Omitting the session for testing other functionalities
 session_start();
 if(!isset($_SESSION["user_name"]) || !isset($_SESSION["user_type_desc"])) header("Location: login.php");
+//end+++dKS20.11.2018 Omitting the session for testing other functionalities
 
 // Initial Data
 $list_file_type = file_get_type(false);

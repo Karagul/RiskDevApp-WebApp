@@ -1,12 +1,13 @@
 <?php
 require_once dirname(__FILE__)."/../config.php";
 
-if(isset($_GET["result_type"]) && isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"]);
-else nipah_result_get("2018", "500101");
+//if(isset($_GET["result_type"]) && isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"]);
+if(isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"]);
+else nipah_result_get("2017", "140908");
 
 function nipah_result_get($selected_year, $selected_subdistrict_code) {
     global $db_conn;
-
+	
     // Colour variables
     $risk_level_5 = "#B22222";
     $risk_level_4 = "#FF6347";
@@ -25,6 +26,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code) {
         $nipah_result_all = $nipah_result_query->fetchAll();
         $nipah_result_array = array("type" => "FeatureCollection",
                                     "features" => array());
+									
         foreach($nipah_result_all as $nipah_result_single) {
             // Getting Subdistrict KML 
             $subdistrict_kml_query = $db_conn->prepare("SELECT *
@@ -37,7 +39,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code) {
                 $subdistrict_kml_result         = $subdistrict_kml_query->fetchAll();
                 #$subdistrict_coordinate_segment = array();
                 $subdistrict_segment_ordered    = array();
-
+				
                 foreach($subdistrict_kml_result as $subdistrict_kml_single) {
                     $current_subdistrict_kml = new SubdistrictKML($subdistrict_kml_single["subdistrict_code"], $subdistrict_kml_single["subdistrict_kml"]);
                     #array_push($subdistrict_coordinate_segment, $current_subdistrict_kml)
@@ -46,7 +48,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code) {
                     // Adding subdistrict master information
                     $subdistrict_name[$subdistrict_kml_single["subdistrict_code"]]["name"] = $subdistrict_kml_single["subdistrict_name_th"];
                 }
-
+				
                 // Parsing Colour Hex
                 switch($nipah_result_single["risk_level_final"]) {
                     case 5: $current_colour = $risk_level_5; break;
@@ -60,8 +62,14 @@ function nipah_result_get($selected_year, $selected_subdistrict_code) {
                 // Parsing GeoJSON array
                 $current_feature = array();
                 $current_feature["type"] = "Feature";
-                $current_feature["geometry"] = array("type" => "Polygon",
-                                                     "coordinates" => $subdistrict_segment_ordered);
+				//beg+++eKS20.11.2018 Adapting for PHP5.5
+                //$current_feature["geometry"] = array("type" => "Polygon",
+                //                                     "coordinates" => $subdistrict_segment_ordered);
+				$geometry_array = array();
+				$geometry_array["type"] = "Polygon";
+				$geometry_array["coordinates"] = $subdistrict_segment_ordered;
+				$current_feature["geometry"] = $geometry_array;
+				
                 $current_feature["properties"] = array("subdistrict_code"   => $nipah_result_single["resulting_subdistrict_code"],
                                                        "subdistrict_name"   => $subdistrict_name[$nipah_result_single["resulting_subdistrict_code"]]["name"],
                                                        "fill"               => $current_colour,
@@ -70,13 +78,14 @@ function nipah_result_get($selected_year, $selected_subdistrict_code) {
                                                        "risk_level_average" => $nipah_result_single["risk_level_average"],
                                                        "stroke"             => "#FFFFFF",
                                                        "stroke-width"       => 2);
+				//end+++eKS20.11.2018 Adapting for PHP5.5
                 array_push($nipah_result_array["features"], $current_feature);
-            }
+            } else die(var_dump($subdistrict_kml_query->errorInfo()));
         }
 
         if(count($nipah_result_array) > 0) die(json_encode($nipah_result_array));
         else return "ไม่พบข้อมูล กรุณาลองอีกครั้ง";
-    }
+    } else die(var_dump($nipah_result_query->errorInfo()));
 }
 
 class Coordinate {

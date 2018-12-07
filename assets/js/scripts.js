@@ -1,5 +1,5 @@
 // Variables
-var current_web_location = "http://localhost/riskdevapp-webapp";
+var current_web_location = "http://164.115.23.67/riskdevapp-webapp";
 
 // General Function: Display System Dialogue
 function system_display_dialogue(message) {

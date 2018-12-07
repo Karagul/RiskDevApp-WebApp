@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once dirname(__FILE__)."/../config.php";
 
 // Check login credentials
@@ -15,13 +15,23 @@ if($user_login_query->execute()) {
     if(count($user_login_result) == 0) die("ชื่อบัญชีผู้ใช้หรือรหัสผ่านไม่ถูกต้อง<br />กรุณาตรวจสอบอีกครั้ง");
     else if(count($user_login_result) > 1) die("เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูแลระบบ");
     
+	$current_user = $user_login_result[0];
+	
     // Check user validity
-    if(date("Y-m-d", strtotime($user_login_result[0]["valid_to_date"])) < date("Y-m-d")) die("ไม่สามารถเข้าใช้งานใดหลังวันที่กำหนด กรุณาติดต่อผู้ดูแลระบบ");
-
-    // Starting the current session
+	//beg++eKS19.11.2018 Adapt for PHP5.5
+    //if(date("Y-m-d", strtotime($current_user["valid_to_date"])) < date("Y-m-d")) die("ไม่สามารถเข้าใช้งานใดหลังวันที่กำหนด กรุณาติดต่อผู้ดูแลระบบ");
+	if($current_user["valid_to_date"] < date("Y-m-d")) die("ไม่สามารถเข้าใช้งานใดหลังวันที่กำหนด กรุณาติดต่อผู้ดูแลระบบ");
+	//end++eKS19.11.2018 Adapt for PHP5.5
+	
+	//beg+++iKS21.11.2018 User Authentication for WebApp
+	if(isset($_POST["device"]) && $_POST["device"] == "WEB" && $current_user["user_type_name"] != "ADMIN") 
+		die("ผู้ใช้นี้ ไม่สามารถเข้าใช้ WebApp ได้");
+	//end+++iKS21.11.2018 User Authentication for WebApp
+	
+    // Starting the current session	
     session_start();
-    $_SESSION["user_name"]      = $user_login_result[0]["user_name"];
-    $_SESSION["user_type_desc"] = $user_login_result[0]["user_type_desc"];
+    $_SESSION["user_name"]      = $current_user["user_name"];
+    $_SESSION["user_type_desc"] = $current_user["user_type_desc"];
     die("เข้าสู่ระบบสำเร็จ");
 }
 ?>

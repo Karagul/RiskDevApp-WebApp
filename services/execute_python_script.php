@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once dirname(__FILE__)."/../config.php";
 
 session_start();
@@ -24,12 +24,20 @@ if(!$insert_log_query->execute()) die("ไม่สามารถบันท�
 
 // ========== BEGIN OF Calculating the Python Model ==========
 // Parameter Settings
+$cleanup_period_query = $db_conn->prepare("SELECT * FROM system_param WHERE param_name = :paramName");
+$cleanup_period_query->bindValue(":paramName", "NIPAH_DRYOUT_IN_DAYS", PDO::PARAM_STR);
+if($cleanup_period_query->execute()) {
+	$cleanup_period_result = $cleanup_period_query->fetchAll();
+	$cleanup_period = $cleanup_period_result[0]["param_value"];
+} else die(var_dump($cleanup_period_query->errorInfo()));
+
 $beta_value = 0.1;
 $gamma_value = 0.5;
 
 $python_script = escapeshellcmd(dirname(__FILE__)."/../scripts/python modelProcess.py $cleanup_period $beta_value $gamma_value");
 $python_output = shell_exec($python_script);
-var_dump($python_output);
+echo $python_output;
+die("สั่งการประมวลผลแล้ว กรุณารอสักครู่");
 // ========== END   OF Calculating the Python Model ==========
 
 // Function: Check username existence and privilege
@@ -38,12 +46,15 @@ function check_username($username) {
 
     $check_username_query = $db_conn->prepare("SELECT user_name, user_type_name
                                                  FROM user_account
-                                                WHERE user_name = :username AND user_type_name = 'ADMIN'");
+                                                WHERE user_name = :username");
     $check_username_query->bindValue(":username", $username, PDO::PARAM_STR);
     if($check_username_query->execute()) {
         $check_username_result = $check_username_query->fetchAll();
-        if(count($check_username_result) == 1) return true;
-        else return false;
+        if(count($check_username_result) == 1) {
+			$current_user = $check_username_result[0];
+			if($current_user["user_type_name"] == "ADMIN") return true;
+			else die("ผู้ใช้นี้ ไม่สามารถสั่งการประมวลผลวิเคราะห์ได้");
+        } else return false;
     }
 }
 

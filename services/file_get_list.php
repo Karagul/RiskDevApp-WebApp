@@ -35,7 +35,7 @@ function file_get_list($bool_return_json, $file_type) {
         if(count($file_list_array) > 0) {
             if($bool_return_json) return json_encode($file_list_array);
             else return $file_list_array;
-        } else return null;
-    }
+        } else return "ไม่พบไฟล์ที่ถูกอัพโหลดในระบบ";
+    } else die(var_dump($file_list_query->errorInfo()));
 }
 ?>

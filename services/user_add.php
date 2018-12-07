@@ -5,7 +5,7 @@ if(isset($_POST["return_type"])) echo user_add($_POST["return_type"]);
 
 function user_add($return_type) {
     global $db_conn;
-
+	
     // Checking Input Validity
     if(!isset($_POST["user_name"]) || !isset($_POST["user_type"])) die("ค่าตัวแปรไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ");
 
@@ -28,9 +28,10 @@ function user_add($return_type) {
         }
 
         if(count($user_account_array) > 0) die("มีผู้ใช้ดังกล่าวอยู่ในระบบอยู่แล้ว");
-    }
+    } else die(var_dump($user_check_query->errorInfo()));
 
     // Checking User Type Validity
+	//die("User Existence Checked: Pass");
 
     // Adding a new user
     $user_add_query = $db_conn->prepare("INSERT INTO user_account
@@ -56,7 +57,7 @@ function user_add($return_type) {
 
             if(count($user_account_array) > 0) die("สร้างผู้ใช้สำเร็จ");
             else die("ไม่สามารถสร้างผู้ใช้งานได้ในขณะนี้ กรุณาติดต่อผู้ดูแลระบบ"); 
-        }
-    }
+        } else die(var_dump($user_check_query->errorInfo()));
+    } else die(var_dump($user_add_query->errorInfo()));
 }
 ?>
