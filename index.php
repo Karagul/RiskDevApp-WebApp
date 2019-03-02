@@ -298,8 +298,11 @@ while($current_year >= $loop_year) {
         <script src="assets/js/jquery.dm-uploader.js"></script>
         <script src="assets/js/scripts.js"></script>
         <script>
+            var current_upload_filename = "";
+
             $("#file-upload-container").dmUploader({
                 auto: false,
+                maxFileSize: 500000000,
                 multiple: false,
                 url: "<?php echo $server_path; ?>/services/file_upload.php",
                 extFilter: ["csv"],
@@ -320,6 +323,7 @@ while($current_year >= $loop_year) {
                 },
                 onNewFile: function(id, file) {
                     if(file.name != "") {
+                        current_upload_filename = file.name;
                         $("#file-upload-selection-name").val(file.name);
                         $("#file-upload-container .btn-success").prop("disabled", false);
                     } else {
@@ -334,7 +338,10 @@ while($current_year >= $loop_year) {
 
                 },
                 onUploadSuccess(id, data) {
-                    system_display_dialogue(data);
+                    // system_display_dialogue(data);
+                    $("#modal-message .modal-body").html(data);
+                    $("#modal-message").modal("toggle");
+                    
                     $("#file-upload-selection-name").val("");
                     $("#file-upload-container .btn-success").prop("disabled", true);
                     $("#file-upload-container").dmUploader("reset");
@@ -345,9 +352,24 @@ while($current_year >= $loop_year) {
             });
 
             function file_upload_commence() {
+                //beg+++iKS28.01.2019 Adding preliminary file duplication checking (before update)
+                /*
                 if(confirm("ต้องการอัพโหลดไฟล์นี้ใช่หรือไม่")) {
                     $("#file-upload-container").dmUploader("start");
                 }
+                */
+                $.post(current_web_location + "/services/file_check_duplicate.php", {
+                    filename: current_upload_filename
+                }, function(data, status) {
+                    if(data.localeCompare("OK") == 0) {
+                        if(confirm("ต้องการอัพโหลดไฟล์นี้ใช่หรือไม่"))
+                            $("#file-upload-container").dmUploader("start");
+                    } else {
+                        if(confirm(data))
+                            $("#file-upload-container").dmUploader("start");
+                    }
+                });
+                //end+++eKS28.01.2019 Adding preliminary file duplication checking (before update)
             }
 
             function file_upload_selection() {

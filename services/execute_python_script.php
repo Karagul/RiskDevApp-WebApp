@@ -3,16 +3,122 @@ require_once dirname(__FILE__)."/../config.php";
 
 session_start();
 
-// Input Validation - Type
-if(!isset($_POST["type"]) || !check_type($_POST["type"])) die("ไม่พบประเภทการวิเคราะห์ กรุณาติดต่อผู้ดูแลระบบ");
+// System versions
+$python_version = trim(exec("$python_bin -V 2>&1"));
 
-// Input Validation - Year
-if(!isset($_POST["year"]) || !check_year($_POST["year"])) die("ไม่พบข้อมูลปี กรุณาติดต่อผู้ดูแลระบบ");
+// Input validation: User
+if(isset($_SESSION["user_name"])) {
+    $check_username_query = $db_conn->prepare("SELECT user_name
+                                                 FROM user_account
+                                                WHERE user_name = :username
+                                                  AND user_type_name = 'ADMIN'");
+    $check_username_query->bindValue(":username", $_SESSION["user_name"], PDO::PARAM_STR);
+    if($check_username_query->execute()) {
+        $check_username_result = $check_username_query->fetchAll();
+        if(count($check_username_result) != 1) die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-1)");
+    } else die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-1)");
+} else die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-1)");
 
-// Input Validation - Username
-if(!isset($_SESSION["user_name"]) || !check_username($_SESSION["user_name"])) die("ไม่พบชื่อผู้ใช้งาน กรุณาติดต่อผู้ดูแลระบบ");
+// Input validation: Execution type
+if(isset($_POST["type"])) {
+    $check_type_query = $db_conn->prepare("SELECT execute_type_name
+                                             FROM execute_type
+                                            WHERE execute_type_name = :typeName");
+    $check_type_query->bindValue(":typeName", $_POST["type"], PDO::PARAM_STR);
+    if($check_type_query->execute()) {
+        $check_type_result = $check_type_query->fetchAll();
+        if(count($check_type_result) != 1) die("ไม่พบประเภทการวิเคราะห์ กรุณาติดต่อผู้ดูแลระบบ");
+    } else die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-2)");
+} else die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-2)");
+
+// Input validation: Execution for year
+if(isset($_POST["year"])) {
+    try {
+        $year_value = intval($_POST["year"]);
+        if($year_value < 1000 || $year_value > 3000) die("ไม่สามารถสั่งการประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-3)");
+    } catch(Exception $e) {
+        die("ไม่สามารถสั่งการประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-3)");
+    }
+} else die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-3)");
+
+// Clearing any previous runs with the same execution type
+$clear_previous_run_query = $db_conn->prepare("DELETE FROM execute_result
+                                                WHERE execute_type_name = :executeType");
+$clear_previous_run_query->bindValue(":executeType", $_POST["type"], PDO::PARAM_STR);
+$clear_previous_run_query->execute();
+
+// ========== BEGIN OF Calculating the Python Model ==========
+// Parameter Settings
+$beta_value    = 0.1;
+$gamma_value   = 0.5;
+$sigma_value   = 0.0;
+$cleanup_stage = 0.0;
+
+// Determining the set of parameters to be used
+$query_text = "SELECT param_name, param_value FROM system_param WHERE param_name IN ";
+switch($_POST["type"]) {
+    case "ASF": 
+        $query_text .= "('ASF_BETA_VALUE', 'ASF_GAMMA_INV_VALUE', 'ASF_SIGMA_INV_VALUE')";
+        break;
+    case "FMD": 
+        $query_text .= "('FMD_BETA_VALUE', 'FMD_GAMMA_INV_VALUE', 'FMD_SIGMA_INV_VALUE')";
+        break;
+    case "HPAI": 
+        $query_text .= "('HPAI_BETA_VALUE', 'HPAI_GAMMA_INV_VALUE', 'HPAI_SIGMA_INV_VALUE')";
+        break;
+    case "NIPAH": 
+        $query_text .= "('NIPAH_BETA_VALUE', 'NIPAH_GAMMA_INV_VALUE', 'NIPAH_SIGMA_INV_VALUE')";
+        break;
+    default: die("WTF");
+}
+
+$param_list_query = $db_conn->prepare($query_text);
+if($param_list_query->execute()) {
+    $param_list = $param_list_query->fetchAll();
+
+    foreach($param_list as $param_single) {        
+        switch($param_single["param_name"]) {
+            // ASF
+            case "ASF_BETA_VALUE":        $beta_value  = $param_single["param_value"]; break;
+            case "ASF_GAMMA_INV_VALUE":   $gamma_value = $param_single["param_value"]; break;
+            case "ASF_SIGMA_INV_VALUE":   $sigma_value = $param_single["param_value"]; break;
+            // FMD
+            case "FMD_BETA_VALUE":        $beta_value  = $param_single["param_value"]; break;
+            case "FMD_GAMMA_INV_VALUE":   $gamma_value = $param_single["param_value"]; break;
+            case "FMD_SIGMA_INV_VALUE":   $sigma_value = $param_single["param_value"]; break;
+            // HPAI
+            case "HPAI_BETA_VALUE":        $beta_value  = $param_single["param_value"]; break;
+            case "HPAI_GAMMA_INV_VALUE":   $gamma_value = $param_single["param_value"]; break;
+            case "HPAI_SIGMA_INV_VALUE":   $sigma_value = $param_single["param_value"]; break;
+            // NIPAH
+            case "NIPAH_BETA_VALUE":        $beta_value  = $param_single["param_value"]; break;
+            case "NIPAH_GAMMA_INV_VALUE":   $gamma_value = $param_single["param_value"]; break;
+            case "NIPAH_SIGMA_INV_VALUE":   $sigma_value = $param_single["param_value"]; break;
+        }
+    }
+} else die(var_dump($param_list_query->errorInfo()));
+
+switch($_POST["type"]) {
+    case "ASF": 
+        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value ASF";
+        break;
+    case "FMD": 
+        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/FMD_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value";
+        break;
+    case "HPAI": 
+        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/HPAI_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value";
+        break;
+    case "NIPAH": 
+        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value NIPAH";
+        break;
+}
+die($python_script);
+$python_output = exec($python_script." 2>&1");
+die("===== Using $python_version =====\n$python_output\nสั่งการประมวลผลแล้ว กรุณารอสักครู่");
+// ========== END   OF Calculating the Python Model ==========
 
 // ========== BEGIN OF Execution Logging ==========
+/*
 $insert_log_query = $db_conn->prepare("INSERT INTO result_nipah VALUES(:executeID, 'NIPAH', :currentDate, :currentUser,
                                                                        'PENDING', :executeFirstDate, '', '', 0, 0)");
 $insert_log_query->bindValue(":executeID", get_execute_id(), PDO::PARAM_INT);
@@ -20,75 +126,6 @@ $insert_log_query->bindValue(":currentDate", date("Y-m-d"), PDO::PARAM_STR);
 $insert_log_query->bindValue(":currentUser", $_SESSION["user_name"], PDO::PARAM_STR);
 $insert_log_query->bindValue(":executeFirstDate", $_POST["year"].'-01-01', PDO::PARAM_STR);
 if(!$insert_log_query->execute()) die("ไม่สามารถบันทึกการวิเคราะห์ได้ กรุณาติดต่อผู้ดูแลระบบ");
+*/
 // ========== END   OF Execution Logging ==========
-
-// ========== BEGIN OF Calculating the Python Model ==========
-// Parameter Settings
-$cleanup_period_query = $db_conn->prepare("SELECT * FROM system_param WHERE param_name = :paramName");
-$cleanup_period_query->bindValue(":paramName", "NIPAH_DRYOUT_IN_DAYS", PDO::PARAM_STR);
-if($cleanup_period_query->execute()) {
-	$cleanup_period_result = $cleanup_period_query->fetchAll();
-	$cleanup_period = $cleanup_period_result[0]["param_value"];
-} else die(var_dump($cleanup_period_query->errorInfo()));
-
-$beta_value = 0.1;
-$gamma_value = 0.5;
-
-$python_script = escapeshellcmd(dirname(__FILE__)."/../scripts/python modelProcess.py $cleanup_period $beta_value $gamma_value");
-$python_output = shell_exec($python_script);
-echo $python_output;
-die("สั่งการประมวลผลแล้ว กรุณารอสักครู่");
-// ========== END   OF Calculating the Python Model ==========
-
-// Function: Check username existence and privilege
-function check_username($username) {
-    global $db_conn;
-
-    $check_username_query = $db_conn->prepare("SELECT user_name, user_type_name
-                                                 FROM user_account
-                                                WHERE user_name = :username");
-    $check_username_query->bindValue(":username", $username, PDO::PARAM_STR);
-    if($check_username_query->execute()) {
-        $check_username_result = $check_username_query->fetchAll();
-        if(count($check_username_result) == 1) {
-			$current_user = $check_username_result[0];
-			if($current_user["user_type_name"] == "ADMIN") return true;
-			else die("ผู้ใช้นี้ ไม่สามารถสั่งการประมวลผลวิเคราะห์ได้");
-        } else return false;
-    }
-}
-
-function check_type($type) {
-    global $db_conn;
-
-    $check_type_query = $db_conn->prepare("SELECT execute_type_name, execute_type_desc
-                                             FROM result_type
-                                            WHERE execute_type_name = :typeName");
-    $check_type_query->bindValue(":typeName", $type, PDO::PARAM_STR);
-    if($check_type_query->execute()) {
-        $check_type_result = $check_type_query->fetchAll();
-        if(count($check_type_result) == 1) return true;
-        else return false;
-    } else die("ไม่พบประเภทการวิเคราะห์ กรุณาติดต่อผู้ดูแลระบบ");
-}
-
-function check_year($year) {
-    try {
-        $year_value = intval($year);
-        if($year_value >= 1000 && $year_value <= 9999) return true;
-        else return false;
-    } catch(Exception $e) {
-        return false;
-    }
-}
-
-function get_execute_id() {
-    global $db_conn;
-
-    $execute_id_query = $db_conn->prepare("SELECT MAX(execute_id) as current_max_id FROM result_nipah");
-    if($execute_id_query->execute()) {
-        $execute_id_result = $execute_id_query->fetch(PDO::FETCH_ASSOC);
-        return intval($execute_id_result["current_max_id"]) + 1;
-    }
-}
 ?>

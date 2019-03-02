@@ -4,12 +4,17 @@ $settings_os = strtoupper(php_uname("s"));
 // Database Handler
 $hostname = "localhost";
 $username = "riskdevapp";
-$password = "riskdevapp2018";
+//$password = "riskdevapp2018";
+$password = "riskdevapp";
 $database = "riskdevapp";
 $charset  = "utf8mb4";
 
-$server_path = "http://164.115.23.67/riskdevapp-webapp";
-session_save_path("C:\\WebApp\\eSmart\\RiskDevApp-WebApp\\temp");
+//$server_path = "http://164.115.23.67/riskdevapp-webapp";
+$server_path = "http://localhost/riskdevapp-webapp";
+//session_save_path("C:\\WebApp\\eSmart\\RiskDevApp-WebApp\\temp");
+$path_directory_script    = $server_path."/scripts";
+$path_directory_workspace = $server_path."/results";
+$python_bin               = "/usr/local/bin/python3";
 
 //beg+++iKS20.11.2018 Enforcing UTF-8 encoding
 header("Content-type: text/html; charset=utf-8");

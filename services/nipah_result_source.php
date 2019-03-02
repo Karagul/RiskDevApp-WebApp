@@ -8,12 +8,13 @@ function nipah_result_source($bool_return_json) {
 
     $nipah_source_query = $db_conn->prepare("SELECT DISTINCT starting_subdistrict_code, subdistrict_name_th, 
                                                              district_name_th, province_name_th
-                                               FROM result_nipah
+                                               FROM execute_result
                                                JOIN subdistrict_master ON starting_subdistrict_code = subdistrict_code
                                                JOIN district_master ON subdistrict_master.district_code = district_master.district_code
                                                JOIN province_master ON district_master.province_code = province_master.province_code
-                                              WHERE execute_first_date LIKE :yearPattern");
-    $nipah_source_query->bindValue(":yearPattern", $_GET["year"]."%", PDO::PARAM_STR);
+                                              WHERE execute_type_name = 'NIPAH'
+                                                AND result_for_year = :year");
+    $nipah_source_query->bindValue(":year", $_GET["year"], PDO::PARAM_STR);
     if($nipah_source_query->execute()) {
         $nipah_source_list = $nipah_source_query->fetchAll();
         $nipah_source_array = array();

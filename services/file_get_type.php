@@ -6,8 +6,7 @@ if(isset($_GET["return_type"])) echo file_get_type(true);
 function file_get_type($bool_return_json) {
     global $db_conn;
 
-    $file_type_query = $db_conn->prepare("SELECT *
-                                        FROM file_type");
+    $file_type_query = $db_conn->prepare("SELECT * FROM file_type ORDER BY file_type_desc");
     if($file_type_query->execute()) {
         $file_type_result = $file_type_query->fetchAll();
         $file_type_array  = [];

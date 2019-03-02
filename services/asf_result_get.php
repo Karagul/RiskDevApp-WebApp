@@ -1,11 +1,11 @@
 <?php
 require_once dirname(__FILE__)."/../config.php";
 
-//if(isset($_GET["result_type"]) && isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"]);
-if(isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"], $_GET["with_normdist"]);
-else nipah_result_get("2017", "140908;250106", "True");
+//if(isset($_GET["result_type"]) && isset($_GET["year"]) && isset($_GET["source"])) asf_result_get($_GET["year"], $_GET["source"]);
+if(isset($_GET["year"]) && isset($_GET["source"])) asf_result_get($_GET["year"], $_GET["source"], $_GET["with_normdist"]);
+else asf_result_get("2017", "140908;150306;170403;190502;200602;200605;240106;240107;240211;240212;260307;260308", "True");
 
-function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with_normdist) {
+function asf_result_get($selected_year, $selected_subdistrict_code, $bool_with_normdist) {
     global $db_conn;
     
     //beg+++iKS12.12.2018 Allowing multiple source subdistricts
@@ -24,27 +24,18 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
     $risk_level_2 = "#FFD700";
     $risk_level_1 = "#FFFACD";
 
-    // Checking the input subdistrict code
-    //beg+++eKS12.12.2018 Allowing multiple source subdistricts
-    /*
-    $nipah_result_query = $db_conn->prepare("SELECT *
-                                               FROM result_nipah
-                                              WHERE execute_first_date LIKE :yearPattern
-                                                AND starting_subdistrict_code = :subdistrictCode");
-    $nipah_result_query->bindValue(":yearPattern", $selected_year."%", PDO::PARAM_STR);
-    $nipah_result_query->bindValue(":subdistrictCode", $selected_subdistrict_code, PDO::PARAM_STR);
-    */
-    $nipah_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
+    $asf_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
                                                     MAX(risk_level_final) AS risk_level_final
                                                FROM execute_result
-                                              WHERE execute_type_name = 'NIPAH' 
+                                              WHERE execute_type_name = 'ASF' 
                                                 AND result_for_year = :year
                                                 AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
-                                              GROUP BY resulting_subdistrict_code");
-    $nipah_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+                                              GROUP BY resulting_subdistrict_code
+                                              ORDER BY resulting_subdistrict_code");
+    $asf_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
     //end+++eKS12.12.2018 Allowing multiple source subdistricts
-    if($nipah_result_query->execute()) {
-        $nipah_result_all = $nipah_result_query->fetchAll();
+    if($asf_result_query->execute()) {
+        $asf_result_all = $asf_result_query->fetchAll();
 
         //beg+++iKS12.12.2018 Pre-calculating the normal distribution
         if(gettype($bool_with_normdist) != "boolean") {
@@ -54,32 +45,32 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
 
         if($bool_with_normdist) {
             // Enabled: Display colour intensity according to the normal distribution
-            $nipah_result_dof  = count($nipah_result_all) - 1;
-            $nipah_result_mean = 0.0;
-            $nipah_result_std  = 0.0;
+            $asf_result_dof  = count($asf_result_all) - 1;
+            $asf_result_mean = 0.0;
+            $asf_result_std  = 0.0;
 
             // Finding the mean
-            foreach($nipah_result_all as $nipah_result_single) {
-                $nipah_result_mean += $nipah_result_single["risk_level_final"];
+            foreach($asf_result_all as $asf_result_single) {
+                $asf_result_mean += $asf_result_single["risk_level_final"];
             }
-            $nipah_result_mean /= count($nipah_result_all);
+            $asf_result_mean /= count($asf_result_all);
             
             // Finding the standard deviation
-            $nipah_result_std_sigma = 0.0;
-            foreach($nipah_result_all as $nipah_result_single) {
-                $nipah_result_std_sigma += pow($nipah_result_single["risk_level_final"] - $nipah_result_mean, 2);
+            $asf_result_std_sigma = 0.0;
+            foreach($asf_result_all as $asf_result_single) {
+                $asf_result_std_sigma += pow($asf_result_single["risk_level_final"] - $asf_result_mean, 2);
             }
-            $nipah_result_std = sqrt($nipah_result_std_sigma / $nipah_result_dof);
+            $asf_result_std = sqrt($asf_result_std_sigma / $asf_result_dof);
 
-            $nipah_result_percentile_75 = $nipah_result_mean + (0.675 * $nipah_result_std);
-            $nipah_result_percentile_25 = $nipah_result_mean - (0.675 * $nipah_result_std);
+            $asf_result_percentile_75 = $asf_result_mean + (0.675 * $asf_result_std);
+            $asf_result_percentile_25 = $asf_result_mean - (0.675 * $asf_result_std);
         }
         //end+++iKS12.12.2018 Pre-calculating the normal distribution
         
-        $nipah_result_array = array("type" => "FeatureCollection",
+        $asf_result_array = array("type" => "FeatureCollection",
                                     "features" => array());
 									
-        foreach($nipah_result_all as $nipah_result_single) {
+        foreach($asf_result_all as $asf_result_single) {
             // Getting Subdistrict KML 
             $subdistrict_kml_query = $db_conn->prepare("SELECT subdistrict_master.subdistrict_code, subdistrict_name_th, subdistrict_latitude, subdistrict_longitude,
                                                                subdistrict_kml, district_name_th, province_name_th
@@ -88,7 +79,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                                                           JOIN district_master ON subdistrict_master.district_code = district_master.district_code
                                                           JOIN province_master ON district_master.province_code = province_master.province_code
                                                          WHERE subdistrict_kml.subdistrict_code = :subdistrictcode");
-            $subdistrict_kml_query->bindParam(":subdistrictcode", $nipah_result_single["resulting_subdistrict_code"], PDO::PARAM_STR);
+            $subdistrict_kml_query->bindParam(":subdistrictcode", $asf_result_single["resulting_subdistrict_code"], PDO::PARAM_STR);
             if($subdistrict_kml_query->execute()) {
                 $subdistrict_name               = array();
                 $subdistrict_kml_result         = $subdistrict_kml_query->fetchAll();
@@ -107,18 +98,18 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                 // Parsing Colour Hex
                 if($bool_with_normdist) {
                     // Parsing colour hex according to the normal distribution
-                    if($nipah_result_single["risk_level_final"] >= $nipah_result_percentile_75) {
+                    if($asf_result_single["risk_level_final"] >= $asf_result_percentile_75) {
                         $current_colour = $risk_level_5;
-                    } else if($nipah_result_single["risk_level_final"] >= $nipah_result_mean) {
+                    } else if($asf_result_single["risk_level_final"] >= $asf_result_mean) {
                         $current_colour = $risk_level_4;
-                    } else if($nipah_result_single["risk_level_final"] >= $nipah_result_percentile_25) {
+                    } else if($asf_result_single["risk_level_final"] >= $asf_result_percentile_25) {
                         $current_colour = $risk_level_3;
                     } else {
                         $current_colour = $risk_level_2;
                     }
                 } else {
                     // Parsing colour hex according to the settings
-                    switch($nipah_result_single["risk_level_final"]) {
+                    switch($asf_result_single["risk_level_final"]) {
                         case 5: $current_colour = $risk_level_5; break;
                         case 4: $current_colour = $risk_level_4; break;
                         case 3: $current_colour = $risk_level_3; break;
@@ -138,25 +129,25 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
 				$geometry_array["coordinates"] = $subdistrict_segment_ordered;
 				$current_feature["geometry"] = $geometry_array;
 				
-                $current_feature["properties"] = array("subdistrict_code"   => $nipah_result_single["resulting_subdistrict_code"],
-                                                       "subdistrict_name"   => $subdistrict_name[$nipah_result_single["resulting_subdistrict_code"]]["name"],
+                $current_feature["properties"] = array("subdistrict_code"   => $asf_result_single["resulting_subdistrict_code"],
+                                                       "subdistrict_name"   => $subdistrict_name[$asf_result_single["resulting_subdistrict_code"]]["name"],
                                                        "district_name"      => $subdistrict_kml_result[0]["district_name_th"],
                                                        "province_name"      => $subdistrict_kml_result[0]["province_name_th"],
                                                        "fill"               => $current_colour,
                                                        "fill-opacity"       => 0.5,
                                                        "latitude"           => $subdistrict_kml_result[0]["subdistrict_latitude"],
                                                        "longitude"          => $subdistrict_kml_result[0]["subdistrict_longitude"],
-                                                       "risk_level_final"   => $nipah_result_single["risk_level_final"],
+                                                       "risk_level_final"   => $asf_result_single["risk_level_final"],
                                                        "stroke"             => "#FFFFFF",
                                                        "stroke-width"       => 2);
 				//end+++eKS20.11.2018 Adapting for PHP5.5
-                array_push($nipah_result_array["features"], $current_feature);
+                array_push($asf_result_array["features"], $current_feature);
             } else die(var_dump($subdistrict_kml_query->errorInfo()));
         }
 
-        if(count($nipah_result_array) > 0) die(json_encode($nipah_result_array));
+        if(count($asf_result_array) > 0) die(json_encode($asf_result_array));
         else return "ไม่พบข้อมูล กรุณาลองอีกครั้ง";
-    } else die(var_dump($nipah_result_query->errorInfo()));
+    } else die(var_dump($asf_result_query->errorInfo()));
 }
 
 class Coordinate {

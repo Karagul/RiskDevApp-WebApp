@@ -6,7 +6,9 @@ if(isset($_GET["return_type"])) echo nipah_result_years(true);
 function nipah_result_years($bool_return_json) {
     global $db_conn;
 
-    $nipah_year_query = $db_conn->prepare("SELECT DISTINCT execute_first_date FROM result_nipah");
+    $nipah_year_query = $db_conn->prepare("SELECT DISTINCT result_for_year 
+                                             FROM execute_result
+                                            WHERE execute_type_name = 'NIPAH'");
     if($nipah_year_query->execute()) {
         $nipah_year_list = $nipah_year_query->fetchAll();
         $nipah_year_array = array();

@@ -1,8 +1,9 @@
 // Variables
-var current_web_location = "http://164.115.23.67/riskdevapp-webapp";
+//var current_web_location = "http://164.115.23.67/riskdevapp-webapp";
+var current_web_location = "http://localhost/riskdevapp-webapp";
 
-// General Function: Display System Dialogue
-function system_display_dialogue(message) {
+// General Function: Display System dialog
+function system_display_dialog(message) {
     $("#modal-message .modal-body").html(message);
     $("#modal-message").modal("toggle");
 }
@@ -33,7 +34,7 @@ function refresh_execution_type() {
             $("#actions-calculation-input-type").html(html);
             $("#actions-calculation-display-type").html('<option value="ALL">ทุกประเภท</option>' + html);
         } catch(e) {
-            system_display_dialogue(data);
+            system_display_dialog(data);
         }
     })
 }
@@ -57,7 +58,7 @@ function refresh_execution_list() {
             });
             $("#actions-calculation tbody").html(html);
         } catch(e) {
-            system_display_dialogue(data);
+            system_display_dialog(data);
         }
     });
 }
@@ -77,7 +78,7 @@ function refresh_file_type() {
             $("#files-list-selection-filter").html('<option value="ALL">ทุกประเภท</option>' + html);
             $("#file-upload-selection-type").html(html);
         } catch(e) {
-            system_display_dialogue(data);
+            system_display_dialog(data);
         }
     });
 }
@@ -99,15 +100,41 @@ function refresh_file_list() {
                 html += '<td>' + value.file_type + '</td>';
                 html += '<td>' + value.upload_date + '</td>';
                 html += '<td>' + value.upload_by + '</td>';
-                html += '<td>-</td>';
+                html += '<td><button type="button" class="btn btn-sm btn-warning" onclick="file_cut(\'' + value.file_name + '\', \'' + value.file_type + '\')">ตัดไฟล์นี้</button> ';
+                html += '<button type="button" class="btn btn-sm btn-danger" onclick="file_delete(\'' + value.file_name + '\', \'' + value.file_type + '\')">ลบไฟล์นี้</button></td>'
                 html += '</tr>';
             });
             $("#files-list tbody").html(html);
         } catch(e) {
-            system_display_dialogue(data);
+            system_display_dialog(data);
         }
     });
 }
+
+//beg+++iKS01.01.2019 Adding file truncation through R scripts provided
+function file_cut(filename, filetype) {
+    $.post(current_web_location + "/services/file_preprocess.php", {
+        file_name: filename,
+        file_type: filetype
+    }, function(data, status) {
+        system_display_dialog(data);
+    });
+}
+//end+++iKS01.01.2019 Adding file truncation through R scripts provided
+
+//beg+++iKS03.02.2019 Adding file delete function
+function file_delete(filename, filetype) {
+    if(confirm("ยืนยันการลบไฟล์ " + filename)) {
+        $.post(current_web_location + "/services/file_delete.php", {
+            file_name: filename,
+            file_type: filetype
+        }, function(data, status) {
+            system_display_dialog(data);
+            refresh_file_list();
+        });
+    }
+}
+//end+++iKS03.02.2019 Adding file delete function
 
 $("#files-list-selection-filter").change(function() {refresh_file_list();});
 
@@ -165,7 +192,7 @@ function refresh_user_list() {
             });
             $("#users-list tbody").html(html);
         } catch(e) {
-            system_display_dialogue(data);
+            system_display_dialog(data);
             // Adjusting the table display
         }
     });
@@ -194,7 +221,7 @@ function refresh_user_type() {
             });
             $("#modal-user-input-usertype").html(html);
         } catch(e) {
-            system_display_dialogue(data);
+            system_display_dialog(data);
             // Adjusting the table display
             $("#users-type tbody").html('<tr><td coslpan="3">&ndash;&nbsp;ไม่พบประเภทผู้ใช้ในระบบ&nbsp;&ndash;</td></tr>');
             // Adjusting the modal display
@@ -220,7 +247,7 @@ function modal_param_toggle(param_name) {
             // Toggling the modal
             $("#modal-parameter").modal("toggle");
         } catch(e) {
-            system_display_dialogue(data);
+            system_display_dialog(data);
         }
     });
 }
@@ -235,7 +262,7 @@ function modal_param_action(action) {
                     param_value: $("#modal-parameter-param-value").val(),
                     return_type: "TEXT"
                 }, function(data, status) {
-                    system_display_dialogue(data);
+                    system_display_dialog(data);
                     if(data.includes("สำเร็จ")) {
                         $("#modal-parameter").modal("toggle");
                         refresh_param_list();
@@ -278,7 +305,7 @@ function modal_user_action(action, username) {
                     user_type: $("#modal-user-input-usertype").val(),
                     return_type: "TEXT"
                 }, function(data, status) {
-                    system_display_dialogue(data);
+                    system_display_dialog(data);
                     if(data.includes("สำเร็จ")) {
                         refresh_user_list();
                         $("#modal-user").modal("toggle");
@@ -293,7 +320,7 @@ function modal_user_action(action, username) {
                     user_type: $("#modal-user-input-usertype").val(),
                     return_type: "TEXT"
                 }, function(data, status) {
-                    system_display_dialogue(data);
+                    system_display_dialog(data);
                     if(data.includes("สำเร็จ")) {
                         refresh_user_list();
                         $("#modal-user").modal("toggle");
@@ -307,7 +334,7 @@ function modal_user_action(action, username) {
                     user_name: username,
                     return_type: "TEXT"
                 }, function(data, status) {
-                    system_display_dialogue(data);
+                    system_display_dialog(data);
                     if(data.includes("สำเร็จ")) {
                         refresh_user_list();
                     }
