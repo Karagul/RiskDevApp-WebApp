@@ -2,10 +2,10 @@
 require_once dirname(__FILE__)."/../config.php";
 
 //if(isset($_GET["result_type"]) && isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"]);
-if(isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"], $_GET["with_normdist"]);
-else nipah_result_get("2017", "140908;250106", "True");
+if(isset($_GET["year"]) && isset($_GET["source"])) nipah_result_get($_GET["year"], $_GET["source"], $_GET["with_normdist"], $_GET["initial_view"]);
+else nipah_result_get("2017", "140908;150306;170403;190502;200602;200605;240106;240107;240211;240212;260307;260308", "True", "False");
 
-function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with_normdist) {
+function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with_normdist, $bool_initial_view) {
     global $db_conn;
     
     //beg+++iKS12.12.2018 Allowing multiple source subdistricts
@@ -17,6 +17,16 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
     }
     //end+++iKS12.12.2018 Allowing multiple source subdistricts
 
+    if(gettype($bool_with_normdist) != "boolean") {
+        if(strtoupper($bool_with_normdist) == "TRUE") $bool_with_normdist = true;
+        else $bool_with_normdist = false;
+    }
+
+    if(gettype($bool_initial_view) != "boolean") {
+        if(strtoupper($bool_initial_view) == "TRUE") $bool_initial_view = true;
+        else $bool_initial_view = false;
+    }
+
     // Colour variables
     $risk_level_5 = "#B22222";
     $risk_level_4 = "#FF6347";
@@ -24,39 +34,36 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
     $risk_level_2 = "#FFD700";
     $risk_level_1 = "#FFFACD";
 
-    // Checking the input subdistrict code
-    //beg+++eKS12.12.2018 Allowing multiple source subdistricts
-    /*
-    $nipah_result_query = $db_conn->prepare("SELECT *
-                                               FROM result_nipah
-                                              WHERE execute_first_date LIKE :yearPattern
-                                                AND starting_subdistrict_code = :subdistrictCode");
-    $nipah_result_query->bindValue(":yearPattern", $selected_year."%", PDO::PARAM_STR);
-    $nipah_result_query->bindValue(":subdistrictCode", $selected_subdistrict_code, PDO::PARAM_STR);
-    */
-    $nipah_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
-                                                    MAX(risk_level_final) AS risk_level_final
-                                               FROM execute_result
-                                              WHERE execute_type_name = 'NIPAH' 
-                                                AND result_for_year = :year
-                                                AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
-                                              GROUP BY resulting_subdistrict_code");
-    $nipah_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+    if($bool_initial_view == true) {
+        $nipah_result_query = $db_conn->prepare("SELECT DISTINCT starting_subdistrict_code
+                                                 FROM execute_result
+                                                WHERE execute_type_name = 'NIPAH'
+                                                  AND result_for_year = :year
+                                                ORDER BY starting_subdistrict_code");
+        $nipah_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+    } else {
+        $nipah_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
+                                                      MAX(risk_level_final) AS risk_level_final
+                                                 FROM execute_result
+                                                WHERE execute_type_name = 'NIPAH' 
+                                                  AND result_for_year = :year
+                                                  AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
+                                                GROUP BY resulting_subdistrict_code
+                                                ORDER BY resulting_subdistrict_code");
+        $nipah_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+    }
     //end+++eKS12.12.2018 Allowing multiple source subdistricts
     if($nipah_result_query->execute()) {
         $nipah_result_all = $nipah_result_query->fetchAll();
 
         //beg+++iKS12.12.2018 Pre-calculating the normal distribution
-        if(gettype($bool_with_normdist) != "boolean") {
-            if(strtoupper($bool_with_normdist) == "TRUE") $bool_with_normdist = true;
-            else $bool_with_normdist = false;
-        }
-
-        if($bool_with_normdist) {
+        if($bool_with_normdist == true) {
             // Enabled: Display colour intensity according to the normal distribution
             $nipah_result_dof  = count($nipah_result_all) - 1;
             $nipah_result_mean = 0.0;
             $nipah_result_std  = 0.0;
+
+            if($nipah_result_dof == 0) $nipah_result_dof = 1;
 
             // Finding the mean
             foreach($nipah_result_all as $nipah_result_single) {
@@ -77,7 +84,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
         //end+++iKS12.12.2018 Pre-calculating the normal distribution
         
         $nipah_result_array = array("type" => "FeatureCollection",
-                                    "features" => array());
+                                  "features" => array());
 									
         foreach($nipah_result_all as $nipah_result_single) {
             // Getting Subdistrict KML 
@@ -88,7 +95,12 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                                                           JOIN district_master ON subdistrict_master.district_code = district_master.district_code
                                                           JOIN province_master ON district_master.province_code = province_master.province_code
                                                          WHERE subdistrict_kml.subdistrict_code = :subdistrictcode");
-            $subdistrict_kml_query->bindParam(":subdistrictcode", $nipah_result_single["resulting_subdistrict_code"], PDO::PARAM_STR);
+            if($bool_initial_view == true) {
+                $subdistrict_kml_query->bindParam(":subdistrictcode", $nipah_result_single["starting_subdistrict_code"], PDO::PARAM_STR);
+            } else {
+                $subdistrict_kml_query->bindParam(":subdistrictcode", $nipah_result_single["resulting_subdistrict_code"], PDO::PARAM_STR);
+            }
+            
             if($subdistrict_kml_query->execute()) {
                 $subdistrict_name               = array();
                 $subdistrict_kml_result         = $subdistrict_kml_query->fetchAll();
@@ -116,7 +128,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                     } else {
                         $current_colour = $risk_level_2;
                     }
-                } else {
+                } else if(!$bool_initial_view) {
                     // Parsing colour hex according to the settings
                     switch($nipah_result_single["risk_level_final"]) {
                         case 5: $current_colour = $risk_level_5; break;
@@ -125,6 +137,9 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                         case 2: $current_colour = $risk_level_2; break;
                         case 1: $current_colour = $risk_level_1; break;
                     }
+                } else {
+                    $current_colour = $risk_level_5;
+                    $nipah_result_single["risk_level_final"] = 1;
                 }
 
                 // Parsing GeoJSON array
@@ -137,9 +152,15 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
 				$geometry_array["type"] = "Polygon";
 				$geometry_array["coordinates"] = $subdistrict_segment_ordered;
 				$current_feature["geometry"] = $geometry_array;
-				
-                $current_feature["properties"] = array("subdistrict_code"   => $nipah_result_single["resulting_subdistrict_code"],
-                                                       "subdistrict_name"   => $subdistrict_name[$nipah_result_single["resulting_subdistrict_code"]]["name"],
+                
+                if($bool_initial_view == true) {
+                    $current_subdistrict_code = $nipah_result_single["starting_subdistrict_code"];
+                } else {
+                    $current_subdistrict_code = $nipah_result_single["resulting_subdistrict_code"];
+                }
+
+                $current_feature["properties"] = array("subdistrict_code"   => $current_subdistrict_code,
+                                                       "subdistrict_name"   => $subdistrict_name[$current_subdistrict_code]["name"],
                                                        "district_name"      => $subdistrict_kml_result[0]["district_name_th"],
                                                        "province_name"      => $subdistrict_kml_result[0]["province_name_th"],
                                                        "fill"               => $current_colour,

@@ -15,7 +15,7 @@ function nipah_result_years($bool_return_json) {
 
         foreach($nipah_year_list as $nipah_year_single) {
             $nipah_year_intermediate = array();
-            $nipah_year_intermediate["year"] = explode("-", $nipah_year_single["execute_first_date"])[0];
+            $nipah_year_intermediate["year"] = $nipah_year_single["result_for_year"];
             array_push($nipah_year_array, $nipah_year_intermediate);
         }
 

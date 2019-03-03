@@ -15,7 +15,7 @@ function fmd_result_years($bool_return_json) {
 
         foreach($fmd_year_list as $fmd_year_single) {
             $fmd_year_intermediate = array();
-            $fmd_year_intermediate["year"] = explode("-", $fmd_year_single["execute_first_date"])[0];
+            $fmd_year_intermediate["year"] = $fmd_year_single["result_for_year"];
             array_push($fmd_year_array, $fmd_year_intermediate);
         }
 

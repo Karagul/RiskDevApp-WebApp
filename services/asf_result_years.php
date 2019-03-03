@@ -15,7 +15,7 @@ function asf_result_years($bool_return_json) {
 
         foreach($asf_year_list as $asf_year_single) {
             $asf_year_intermediate = array();
-            $asf_year_intermediate["year"] = explode("-", $asf_year_single["execute_first_date"])[0];
+            $asf_year_intermediate["year"] = $asf_year_single["result_for_year"];
             array_push($asf_year_array, $asf_year_intermediate);
         }
 

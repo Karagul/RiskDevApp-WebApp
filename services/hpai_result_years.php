@@ -15,7 +15,7 @@ function hpai_result_years($bool_return_json) {
 
         foreach($hpai_year_list as $hpai_year_single) {
             $hpai_year_intermediate = array();
-            $hpai_year_intermediate["year"] = explode("-", $hpai_year_single["execute_first_date"])[0];
+            $hpai_year_intermediate["year"] = $hpai_year_single["result_for_year"];
             array_push($hpai_year_array, $hpai_year_intermediate);
         }
 

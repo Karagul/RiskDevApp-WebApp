@@ -905,7 +905,7 @@ def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 
                 currentFile = csv.reader(open(riskLvlFolderPath + "/" + file, "r"))
                 currentSubdistrict = file[0:6]
                 for row in currentFile:
-                    insertQuery = "INSERT INTO execute_result VALUES({epidemicType}, '2017', '{date}', '{user}', 'READY', '{sourceSubdistrict}', '{resultSubdistrict}', '{riskLevel}')".format(
+                    insertQuery = "INSERT INTO execute_result VALUES('{epidemicType}', '2017', '{date}', '{user}', 'READY', '{sourceSubdistrict}', '{resultSubdistrict}', '{riskLevel}')".format(
                         epidemicType = epidemicType,
                         date = currentDate,
                         user = "RiskDevApp",
