@@ -302,7 +302,7 @@ while($current_year >= $loop_year) {
 
             $("#file-upload-container").dmUploader({
                 auto: false,
-                maxFileSize: 500000000,
+                maxFileSize: 1024000000,
                 multiple: false,
                 url: "<?php echo $server_path; ?>/services/file_upload.php",
                 extFilter: ["csv"],
@@ -333,9 +333,10 @@ while($current_year >= $loop_year) {
                 },
                 onUploadError: function(id, xhr, status, errorThrown) {
                     alert("Error: " + errorThrown);
+					$("#file-upload-container").dmUploader("reset");
                 },
                 onUploadProgress(id, percent) {
-
+					if(percent % 25 == 0) alert("ความคืบหน้า: " + percent + " เปอร์เซนต์");
                 },
                 onUploadSuccess(id, data) {
                     // system_display_dialogue(data);

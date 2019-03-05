@@ -100,32 +100,29 @@ if($param_list_query->execute()) {
 
 switch($_POST["type"]) {
     case "ASF": 
-        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value ASF";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value ASF";
         break;
     case "FMD": 
-        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/FMD_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\FMD_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
         break;
     case "HPAI": 
-        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/HPAI_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\HPAI_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
         break;
     case "NIPAH": 
-        $python_script = "$python_bin ".dirname(__FILE__)."/../scripts/Scripts/ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."/../results $cleanup_stage $beta_value $gamma_value $sigma_value NIPAH";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value NIPAH";
         break;
 }
-die($python_script);
 $python_output = exec($python_script." 2>&1");
 die("===== Using $python_version =====\n$python_output\nสั่งการประมวลผลแล้ว กรุณารอสักครู่");
 // ========== END   OF Calculating the Python Model ==========
 
 // ========== BEGIN OF Execution Logging ==========
-/*
-$insert_log_query = $db_conn->prepare("INSERT INTO result_nipah VALUES(:executeID, 'NIPAH', :currentDate, :currentUser,
+/*$insert_log_query = $db_conn->prepare("INSERT INTO execute_result VALUES(:epidemicType, :currentDate, :currentUser,
                                                                        'PENDING', :executeFirstDate, '', '', 0, 0)");
-$insert_log_query->bindValue(":executeID", get_execute_id(), PDO::PARAM_INT);
+$insert_log_query->bindValue("epidemicType", $_POST["type"], PDO::PARAM_STR);
 $insert_log_query->bindValue(":currentDate", date("Y-m-d"), PDO::PARAM_STR);
 $insert_log_query->bindValue(":currentUser", $_SESSION["user_name"], PDO::PARAM_STR);
-$insert_log_query->bindValue(":executeFirstDate", $_POST["year"].'-01-01', PDO::PARAM_STR);
-if(!$insert_log_query->execute()) die("ไม่สามารถบันทึกการวิเคราะห์ได้ กรุณาติดต่อผู้ดูแลระบบ");
-*/
+$insert_log_query->bindValue(":resultForYear", $_POST["year"], PDO::PARAM_STR);
+if(!$insert_log_query->execute()) die("ไม่สามารถบันทึกการวิเคราะห์ได้ กรุณาติดต่อผู้ดูแลระบบ");*/
 // ========== END   OF Execution Logging ==========
 ?>

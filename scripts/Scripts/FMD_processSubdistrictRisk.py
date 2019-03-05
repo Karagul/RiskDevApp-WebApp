@@ -5,7 +5,7 @@ def main(directory, modelPath , fileName):
     try:
         #beg+++eKS26.02.2019 Change R model path
         #subprocess.call ("Rscript --vanilla {0}/processingSubdistrictRisk.R {1} {2}".format(modelPath,directory,fileName), shell=True)
-        subprocess.call("/usr/local/bin/Rscript --vanilla {0}/FMD_processingSubdistrictRisk.R {1} {2}".format(modelPath, directory, fileName), shell=True)
+        subprocess.call("\"C:\\Program Files\\R\\R-3.5.1\\bin\\Rscript.exe\" --vanilla {0}/FMD_processingSubdistrictRisk.R {1} {2}".format(modelPath, directory, fileName), shell=True)
         #beg+++eKS26.02.2019 Change R model path
         print('Running R model => DONE')
     except:

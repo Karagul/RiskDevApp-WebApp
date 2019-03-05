@@ -7,7 +7,7 @@ def main(directory, modelPath='R_model', fileName='DataMart_Emove.csv', slaughte
     else: slauter = 'without'
 
     try:
-        subprocess.call ("/usr/local/bin/Rscript --vanilla {0}/processingEmove.R {1} {2} {3}".format(modelPath,directory,fileName,slauter), shell=True)
+        subprocess.call ("\"C:\\Program Files\\R\\R-3.5.1\\bin\\Rscript.exe\" --vanilla {0}/processingEmove.R {1} {2} {3}".format(modelPath,directory,fileName,slauter), shell=True)
         print('Running R model => DONE')
     except:
         print('Running R model => FAILED')    

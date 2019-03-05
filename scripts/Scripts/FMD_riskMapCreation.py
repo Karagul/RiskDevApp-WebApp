@@ -87,7 +87,7 @@ def seir_modelProcessing(inputCSVPath,outputCSVPath,sirModelPath, beta, gamma, s
     import subprocess
     print('Running R model => START')
     try:
-        subprocess.call ("/usr/local/bin/Rscript --vanilla {0}/FMD_epidemicModel_190103.R {1} {2} {0} {3} {4} {5}".format(sirModelPath,inputCSVPath,outputCSVPath,beta,gamma,sigma), shell=True)
+        subprocess.call ("\"C:\\Program Files\\R\\R-3.5.1\\bin\\Rscript.exe\" --vanilla {0}/FMD_epidemicModel_190103.R {1} {2} {0} {3} {4} {5}".format(sirModelPath,inputCSVPath,outputCSVPath,beta,gamma,sigma), shell=True)
         print('Running R model => DONE')
     except:
         print('Running R model => FAILED')     
@@ -96,7 +96,7 @@ def simulateEmove_modelProcessing(sirModelPath,weekFolder,realEmoveCSVFile,initi
     import subprocess
     print('Running R model => START')
     try:
-        subprocess.call ("/usr/local/bin/Rscript --vanilla {0}/FMD_simulatingMovement.R {1} {2} {3} {4}".format(sirModelPath,weekFolder,realEmoveCSVFile,initialSD,seed), shell=True)
+        subprocess.call ("\"C:\\Program Files\\R\\R-3.5.1\\bin\\Rscript.exe\" --vanilla {0}/FMD_simulatingMovement.R {1} {2} {3} {4}".format(sirModelPath,weekFolder,realEmoveCSVFile,initialSD,seed), shell=True)
         print('Running R model => DONE')
     except:
         print('Running R model => FAILED') 
@@ -888,15 +888,16 @@ def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 
       
     #beg+++iKS03.02.2019 Update the results to the database
     import datetime
-    import pymysql
+    import pyodbc
     from os import listdir
 
-    connection = pymysql.connect(host="localhost",
-                                 user="riskdevapp",
-                                 password="riskdevapp",
-                                 db="riskdevapp",
-                                 charset="utf8mb4",
-                                 cursorclass=pymysql.cursors.DictCursor)
+    #connection = pymysql.connect(host="localhost",
+    #                             user="riskdevapp",
+    #                             password="riskdevapp",
+    #                             db="riskdevapp",
+    #                             charset="utf8mb4",
+    #                             cursorclass=pymysql.cursors.DictCursor)
+    connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
 
     try:
         with connection.cursor() as cursor:

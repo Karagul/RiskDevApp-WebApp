@@ -1,6 +1,6 @@
 // Variables
-//var current_web_location = "http://164.115.23.67/riskdevapp-webapp";
-var current_web_location = "http://localhost/riskdevapp-webapp";
+var current_web_location = "http://164.115.23.67/riskdevapp-webapp";
+//var current_web_location = "http://localhost/riskdevapp-webapp";
 
 // General Function: Display System dialog
 function system_display_dialog(message) {
@@ -147,10 +147,24 @@ function refresh_param_list() {
             // Parsing JSON data
             var response = JSON.parse(data);
             var html     = "";
+			
             // Adjusting the listing panel
             $.each(response, function(index, value) {
+				//beg+++iKS05.03.2019 Adding colors
+				var current_background = "";
+				if(value.param_name.startsWith("ASF")) {
+					current_background = "#FFFFDD";
+				} else if(value.param_name.startsWith("FMD")) {
+					current_background = "#FFFFEE";
+				} else if(value.param_name.startsWith("HPAI")) {
+					current_background = "#CCFFFF";
+				} else if(value.param_name.startsWith("NIPAH")) {
+					current_background = "#CCFFEE";
+				}
+				//end+++iKS05.03.2019 Adding colors
+			
                 html += '<div class="col-md-4 col-sm-6">';
-                html += '   <div class="card text-center">';
+                html += '   <div class="card text-center" style="background-color: ' + current_background + '">';
                 html += '       <div class="card-body p-3">';
                 html += '           <h5>' + value.param_desc + '</h5>';
                 html += '           <h1 class="display-4 mt-3">' + value.param_value + '</h1>';

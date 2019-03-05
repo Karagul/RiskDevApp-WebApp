@@ -10,7 +10,8 @@ function execute_get_list($bool_return_json) {
                                                FROM execute_result
                                                JOIN execute_type ON execute_result.execute_type_name = execute_type.execute_type_name
                                                JOIN execute_status ON execute_result.execute_status_name = execute_status.execute_status_name
-                                              GROUP BY execute_result.execute_type_name, execute_result.result_for_year");
+                                              GROUP BY execute_result.execute_type_name, execute_result.result_for_year,
+													   execute_type.execute_type_desc, execute_date, execute_status_desc");
     if($execute_list_query->execute()) {
         $execute_list_result = $execute_list_query->fetchAll();
         $execute_list_array = array();

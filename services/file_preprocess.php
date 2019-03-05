@@ -1,10 +1,10 @@
 <?php 
-require_once dirname(__FILE__)."/../config.php";
+require_once dirname(__FILE__)."\\..\\config.php";
 
 // Settings for file path
-$path_result = dirname(__FILE__)."/../results/";
-$path_rmodel = dirname(__FILE__)."/../scripts/R_model/";
-$path_script = dirname(__FILE__)."/../scripts/Scripts/";
+$path_result = dirname(__FILE__)."\\..\\results\\";
+$path_rmodel = dirname(__FILE__)."\\..\\scripts\\R_model\\";
+$path_script = dirname(__FILE__)."\\..\\scripts\\Scripts\\";
 
 // Parsing request parameters
 $current_filename = $_POST["file_name"];
@@ -15,7 +15,7 @@ $current_filepath = "$path_result$current_filename";
 switch($current_filetype) {
     case "GENERAL - ไฟล์ประชากรสัตว์ (Animal Population)":
         $command_string = escapeshellcmd($path_script."NIPAH_processPopulation.py $path_result $path_rmodel $current_filepath");
-        $command_output = die($python_bin." $command_string 2>&1");
+        $command_output = exec($python_bin." $command_string 2>&1");
 
         //$command_string = escapeshellcmd($path_script."fixPop.py $current_filepath $path_upload"); 
         //$command_output .= exec($python_bin." $command_string 2>&1");
@@ -52,7 +52,7 @@ switch($current_filetype) {
         die($command_output);
     case "NIPAH - ไฟล์การเคลื่อนย้ายสัตว์ (Pig Movement)": 
         $command_string = escapeshellcmd($path_script."processEmove.py $path_result $path_rmodel $current_filepath True"); 
-        $command_output = die($python_bin." $command_string 2>&1");
+        $command_output = exec($python_bin." $command_string 2>&1");
         die($command_output);
     case "NIPAH - ไฟล์ประชากรหมู (Pig Population)": 
         $command_string = escapeshellcmd($path_script."NIPAH_fixPop.py $current_filepath $path_result"); 
