@@ -1,4 +1,4 @@
-﻿
+
 def loadCSV(csvfile , flagForheader=0):  # Read CSV file
     import csv
     if flagForheader == 0:    # Not skip a header
@@ -13,19 +13,19 @@ def loadCSV(csvfile , flagForheader=0):  # Read CSV file
             data = [r for r in reader]            
             return data
 
-def checkFileAndFolder(workingDirectory, epidemicType):  # Checking the required files and directories
+def checkFileAndFolder(workingDirectory):  # Checking the required files and directories
     import sys
     # File
-    pigPopPath = workingDirectory +'\\PIG_POP.csv'
-    initialNodePath = workingDirectory + '\\' + epidemicType + '_SubdistrictRisk_High.csv'
-    emovementPath = workingDirectory + '\\E_Movement_nipah_2017.csv'
+    pigPopPath = workingDirectory +'/PIG_POP.csv'
+    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder
-    weekPath =  workingDirectory + '\\Weeks'    
-    inputFolder = workingDirectory + '\\InputCSV'
-    outPutFolder = workingDirectory +'\\OutputCSV'
-    riskLvlFolderPath = workingDirectory + '\\RiskLevel'
-    sirModelPath = workingDirectory +'\\..\\scripts\\R_model'
+    weekPath =  workingDirectory + '/Weeks'    
+    inputFolder = workingDirectory + '/InputCSV'
+    outPutFolder = workingDirectory +'/OutputCSV'
+    riskLvlFolderPath = workingDirectory + '/RiskLevel'
+    sirModelPath = workingDirectory +'/../scripts/R_model'
 
     # Checking status of required files
     # 1. Emovement file eg. EmoveData_nipah_2017.csv    
@@ -75,10 +75,10 @@ def checkFileAndFolder(workingDirectory, epidemicType):  # Checking the required
     # Checking status of required R files
     # Simulating Emovement file eg. simulatingMovement.R    
     try:
-        file = open(sirModelPath + '\\ASF_NIPAH_simulatingMovement.R', 'r')
-        print('{} is checked.'.format(sirModelPath + '\\ASF_NIPAH_simulatingMovement.R'))  
+        file = open(sirModelPath + '/ASF_simulatingMovement.R', 'r')
+        print('{} is checked.'.format(sirModelPath + '/ASF_simulatingMovement.R'))  
     except IOError:
-        print('Cannot find {}\nProgram will close.'.format(sirModelPath + '\\ASF_NIPAH_simulatingMovement.R'))
+        print('Cannot find {}\nProgram will close.'.format(sirModelPath + '/ASF_simulatingMovement.R'))
         sys.exit(1)
 
     return True
@@ -87,7 +87,7 @@ def seir_modelProcessing(inputCSVPath,outputCSVPath,sirModelPath, beta, gamma, s
     import subprocess
     print('Running R model => START')
     try:
-        subprocess.call ("\"C:\\Program Files\\R\\R-3.5.1\\bin\\Rscript.exe\" --vanilla {0}/ASF_NIPAH_epidemicModel_190103.R {1} {2} {0} {3} {4} {5}".format(sirModelPath,inputCSVPath,outputCSVPath,beta,gamma,sigma), shell=True)
+        subprocess.call ("Rscript --vanilla {0}/epidemicModel_190103.R {1} {2} {0} {3} {4} {5}".format(sirModelPath,inputCSVPath,outputCSVPath,beta,gamma,sigma), shell=True)
         print('Running R model => DONE')
     except:
         print('Running R model => FAILED')     
@@ -96,7 +96,7 @@ def simulateEmove_modelProcessing(sirModelPath,weekFolder,realEmoveCSVFile,initi
     import subprocess
     print('Running R model => START')
     try:
-        subprocess.call ("\"C:\\Program Files\\R\\R-3.5.1\\bin\\Rscript.exe\" --vanilla {0}/ASF_NIPAH_simulatingMovement.R {1} {2} {3} {4}".format(sirModelPath,weekFolder,realEmoveCSVFile,initialSD,seed), shell=True)
+        subprocess.call ("Rscript --vanilla {0}/ASF_simulatingMovement.R {1} {2} {3} {4}".format(sirModelPath,weekFolder,realEmoveCSVFile,initialSD,seed), shell=True)
         print('Running R model => DONE')
     except:
         print('Running R model => FAILED') 
@@ -852,12 +852,141 @@ def modelProcess(initSD,pigPop,weekPath,realEmoveFile,initialSDFile,cleanUpPerio
                
     print('\n\n*************** The Risk Map creation is Done **************\n\n')
 
-def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 6.5, maxLoop = 40, epidemicType=''):
-    print('Status of files and directories checking: '+ str(checkFileAndFolder(workingDirectory, epidemicType)))
+def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gamma ,sigma, maxLoop, epidemicType): # Function for experiment
+    print('Status of files and directories checking: '+ str(checkFileAndFolder(workingDirectory)))
+    
+    # File
+    pigPopPath = workingDirectory +'/PIG_POP.csv'
+    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
+
+    # Folder
+    weekPath =  workingDirectory + '/Weeks'    
+    inputFolder = workingDirectory + '/InputCSV'
+    outPutFolder = workingDirectory +'/OutputCSV'    
+    sirModelPath = workingDirectory +'/../scripts/R_model'
+
+    riskLvlFolderPath = workingDirectory + '/100Iterations'
+    import os
+    # Create main save folder
+    if not os.path.exists(riskLvlFolderPath):
+        os.makedirs(riskLvlFolderPath)
+        print(riskLvlFolderPath + ' is created.')
+
+    import csv       
+    # Import every initial SD for first week
+    initNodes = loadCSV(initialNodePath,1)
+
+    # Import Animal population csv file
+    pigReader = csv.reader(open(pigPopPath, 'r')) 
+    tmpPop = []
+    for row in pigReader:        
+        tmp = []
+        tmp.append(row[0])
+        tmp.append(row[2])
+        tmpPop.append(tmp)
+    
+    pigPop = dict(tmpPop)
+
+    for i in range(1,maxIterations + 1): # Main loop
+        # Create folder to save risk file at number i
+        saveFolder = riskLvlFolderPath + '/' + str(i)
+        if not os.path.exists(saveFolder):
+            os.makedirs(saveFolder)
+            print(saveFolder + ' is created.')
+        # Main process
+        print('Beta: {0}    Gamma : {1}    Sigma: {2}'.format(beta,1/gamma,1/sigma))
+        modelProcess(initNodes,pigPop,weekPath,emovementPath,initialNodePath,cleanUpPeriod,sirModelPath,beta,1/gamma,1/sigma,inputFolder,outPutFolder,workingDirectory,saveFolder,maxLoop)
+
+    from os import listdir
+    from os.path import isfile, join
+    
+    for node in initNodes:
+        print('Initial node {0} summarize risk level with {1} iterations'.format(node[0],maxIterations))
+
+        # Accumulate risk level with number of iterations
+        finalRisk = None
+        for i in range(1,maxIterations + 1):
+            saveFolder = riskLvlFolderPath + '/' + str(i)
+            riskFiles = [f for f in listdir(saveFolder) if isfile(join(saveFolder, f))]
+            # print(riskFiles)
+            for risk in riskFiles:
+                name,_ = risk.split('.')                 
+                if str(name) == str(node[0]):
+                    riskData = loadCSV(saveFolder + '/' + risk,0)                   
+                    if finalRisk is None:
+                        finalRisk = riskData
+                    else:
+                        # print(finalRisk)
+                        for dataRisk in riskData:                            
+                            for j in range(0,len(finalRisk)):
+                                if finalRisk[j][0] == dataRisk[0] :
+                                    finalRisk[j][1] = str(float(dataRisk[1]) + float(finalRisk[j][1]))
+                                    print('Plus risk at sub-district {}'.format(dataRisk[0]))
+                                    break   
+                                elif finalRisk[j][0] != dataRisk[0] and j == len(finalRisk) - 1:
+                                    finalRisk.append(dataRisk)
+                                    print('Add new risk at sub-district {}'.format(dataRisk[0]))
+                                    break
+                        # print(finalRisk)                     
+                    break
+
+        
+        if finalRisk is not None:         
+            # Save final risk file
+            finalFolder = riskLvlFolderPath + '/Final'
+            if not os.path.exists(finalFolder):
+                os.makedirs(finalFolder)
+                print(finalFolder + ' is created.')
+            
+            with open(finalFolder + '/' + node[0] + '.csv', 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                for dataRisk in finalRisk:
+                    # Divide accumulate risk level with number of iterations
+                    dataRisk[1] = str(float(dataRisk[1]) / float(maxIterations))
+
+                    writer.writerow(dataRisk)
+
+    print('Done')
+    #beg+++iKS03.02.2019 Update the results to the database
+    import datetime
+    import pyodbc
+    from os import listdir
+
+    #connection = pymysql.connect(host="localhost",
+    #                             user="riskdevapp",
+    #                             password="riskdevapp",
+    #                             db="riskdevapp",
+    #                             charset="utf8mb4",
+    #                             cursorclass=pymysql.cursors.DictCursor)
+    connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
+    try:
+        with connection.cursor() as cursor:
+            currentDate = datetime.datetime.today().strftime("%Y-%m-%d")
+            for file in listdir(riskLvlFolderPath):
+                currentFile = csv.reader(open(riskLvlFolderPath + "/" + file, "r"))
+                currentSubdistrict = file[0:6]
+                for row in currentFile:
+                    insertQuery = "INSERT INTO execute_result VALUES('{epidemicType}', '2017', '{date}', '{user}', 'READY', '{sourceSubdistrict}', '{resultSubdistrict}', '{riskLevel}')".format(
+                        epidemicType = epidemicType,
+                        date = currentDate,
+                        user = "RiskDevApp",
+                        sourceSubdistrict = currentSubdistrict,
+                        resultSubdistrict = row[0],
+                        riskLevel = row[1]
+                    )
+                    cursor.execute(insertQuery)
+        connection.commit()
+    finally:
+        connection.close()
+    #end+++iKS03.02.2019 Update the results to the database
+
+def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 6.5, maxLoop = 40, epidemicType = ''):
+    print('Status of files and directories checking: '+ str(checkFileAndFolder(workingDirectory)))
     
     # File
     pigPopPath = workingDirectory +'/Pig_POP.csv'
-    initialNodePath = workingDirectory + '/' + epidemicType + "_SubdistrictRisk_High.csv"
+    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
     emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder
@@ -885,7 +1014,7 @@ def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 
     
     # Main process
     modelProcess(initNodes,pigPop,weekPath,emovementPath,initialNodePath,cleanUpPeriod,sirModelPath,beta,1/gamma,1/sigma,inputFolder,outPutFolder,workingDirectory,riskLvlFolderPath,maxLoop)
-      
+    
     #beg+++iKS03.02.2019 Update the results to the database
     import datetime
     import pyodbc
@@ -927,20 +1056,18 @@ if __name__ == "__main__":
                         help='working directory')
     parser.add_argument('cleanUpPeriod', metavar='Cleanup Stage',type=int, 
                         help='clean up period for cleaning the infected node in day format (Set 0 all the time)')
-    parser.add_argument('beta', metavar='Beta',type=int, 
+    parser.add_argument('beta', metavar='Beta',type=float, 
                         help='beta value (e.g. 10)')
     parser.add_argument('gamma', metavar='Gamma',type=float, 
                         help='gamma value (e.g. 0.5)')
     parser.add_argument('sigma', metavar='Sigma',type=float, 
                         help='sigma value (e.g. 6.5)')
-    #beg+++iKS02.03.2019 Adding epidemic type identifier
-    parser.add_argument('epidemicType', metavar='Epidemic Type', type=str, help='epidemic value (ASF or NIPAH)')
-    #end+++iKS02.03.2019 Adding epidemic type identifier
                         
     args = parser.parse_args()    
-    print(str(args.workingDirect) + '\n' + str(args.cleanUpPeriod) + '\n' + str(args.beta) + '\n' + str(args.gamma) + '\n' + str(args.sigma) + '\n' + str(args.epidemicType))
-    main(workingDirectory=args.workingDirect, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma, epidemicType=args.epidemicType) 
+    print(str(args.workingDirect) + '\n' + str(args.cleanUpPeriod) + '\n' + str(args.beta) + '\n' + str(args.gamma) + '\n' + str(args.sigma))
+    # main(workingDirectory=args.workingDirect, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma) 
     
+    Model100Iterations(workingDirectory=args.workingDirect, maxIterations = 100, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma, maxLoop = 40, epidemicType='ASF')
     # python riskMapCreation.py D:/Works/RiskApp/Git_Source_Code 0 10 0.5
     
     # python riskMapCreation.py D:/RiskApp/SourceCode 14 10 0.5 6.5

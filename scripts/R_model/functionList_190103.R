@@ -36,7 +36,7 @@ ListInput <- function(Input){
   caseRow <- NULL
   
   for(i in 2:nrow(Input)){
-    if(is.na(Input[i-1,4])){caseRow <- c(caseRow,i)}
+    if(is.na(Input[i-1,4]) &!is.na(Input[i, 4])){caseRow <- c(caseRow,i)}
   }
   
   caseList <- list()

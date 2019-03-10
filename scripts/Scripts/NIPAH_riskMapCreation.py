@@ -16,9 +16,9 @@ def loadCSV(csvfile , flagForheader=0):  # Read CSV file
 def checkFileAndFolder(workingDirectory):  # Checking the required files and directories
     import sys
     # File
-    pigPopPath = workingDirectory +'/POULTRY_POP.csv'
+    pigPopPath = workingDirectory +'/PIG_POP.csv'
     initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
-    emovementPath = workingDirectory + '/E_Movement_HPAI_2017.csv'
+    emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder
     weekPath =  workingDirectory + '/Weeks'    
@@ -75,10 +75,10 @@ def checkFileAndFolder(workingDirectory):  # Checking the required files and dir
     # Checking status of required R files
     # Simulating Emovement file eg. simulatingMovement.R    
     try:
-        file = open(sirModelPath + '/HPAI_simulatingMovement.R', 'r')
-        print('{} is checked.'.format(sirModelPath + '/HPAI_simulatingMovement.R'))  
+        file = open(sirModelPath + '/NIPAH_simulatingMovement.R', 'r')
+        print('{} is checked.'.format(sirModelPath + '/NIPAH_simulatingMovement.R'))  
     except IOError:
-        print('Cannot find {}\nProgram will close.'.format(sirModelPath + '/HPAI_simulatingMovement.R'))
+        print('Cannot find {}\nProgram will close.'.format(sirModelPath + '/NIPAH_simulatingMovement.R'))
         sys.exit(1)
 
     return True
@@ -96,7 +96,7 @@ def simulateEmove_modelProcessing(sirModelPath,weekFolder,realEmoveCSVFile,initi
     import subprocess
     print('Running R model => START')
     try:
-        subprocess.call ("Rscript --vanilla {0}/HPAI_simulatingMovement.R {1} {2} {3} {4}".format(sirModelPath,weekFolder,realEmoveCSVFile,initialSD,seed), shell=True)
+        subprocess.call ("Rscript --vanilla {0}/NIPAH_simulatingMovement.R {1} {2} {3} {4}".format(sirModelPath,weekFolder,realEmoveCSVFile,initialSD,seed), shell=True)
         print('Running R model => DONE')
     except:
         print('Running R model => FAILED') 
@@ -695,7 +695,7 @@ def modelProcess(initSD,pigPop,weekPath,realEmoveFile,initialSDFile,cleanUpPerio
 
                         else:
                             print('No more initial node\nThe process is done')
-                                
+                               
                             if len(sdRiskRecord) > 0 :
                                 riskRecorded = {}                                                                                       # Convert list to dict and filter the duplicate one for recording 
                                 riskRecorded = convertListToDict(sdRiskRecord) 
@@ -856,9 +856,9 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
     print('Status of files and directories checking: '+ str(checkFileAndFolder(workingDirectory)))
     
     # File
-    pigPopPath = workingDirectory +'/POULTRY_POP.csv'
+    pigPopPath = workingDirectory +'/PIG_POP.csv'
     initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
-    emovementPath = workingDirectory + '/E_Movement_HPAI_2017.csv'
+    emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder
     weekPath =  workingDirectory + '/Weeks'    
@@ -981,14 +981,14 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
     finally:
         connection.close()
     #end+++iKS03.02.2019 Update the results to the database
-  
-def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 6.5, maxLoop = 40, epidemicType = ''):
+    
+def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 6.5, maxLoop = 40, epidemicType = 'NIPAH'):
     print('Status of files and directories checking: '+ str(checkFileAndFolder(workingDirectory)))
     
     # File
-    pigPopPath = workingDirectory +'/POULTRY_POP.csv'
+    pigPopPath = workingDirectory +'/Pig_POP.csv'
     initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
-    emovementPath = workingDirectory + '/E_Movement_HPAI_2017.csv'
+    emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder
     weekPath =  workingDirectory + '/Weeks'    
@@ -1068,7 +1068,10 @@ if __name__ == "__main__":
     print(str(args.workingDirect) + '\n' + str(args.cleanUpPeriod) + '\n' + str(args.beta) + '\n' + str(args.gamma) + '\n' + str(args.sigma))
     # main(workingDirectory=args.workingDirect, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma) 
     
-    Model100Iterations(workingDirectory=args.workingDirect, maxIterations = 100, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma, maxLoop = 40, epidemicType='HPAI')
+    Model100Iterations(workingDirectory=args.workingDirect, maxIterations = 100, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma, maxLoop = 40, epidemicType='NIPAH')
+    
+    # python riskMapCreation.py D:/Works/RiskApp/Git_Source_Code 0 10 0.5
+
     # python riskMapCreation.py D:/Works/RiskApp/Git_Source_Code 0 10 0.5
     
     # python riskMapCreation.py D:/RiskApp/SourceCode 14 10 0.5 6.5
