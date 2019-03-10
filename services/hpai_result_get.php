@@ -121,12 +121,16 @@ function hpai_result_get($selected_year, $selected_subdistrict_code, $bool_with_
                     // Parsing colour hex according to the normal distribution
                     if($hpai_result_single["risk_level_final"] >= $hpai_result_percentile_75) {
                         $current_colour = $risk_level_5;
+                        $hpai_result_single["risk_level_final"] = 5;
                     } else if($hpai_result_single["risk_level_final"] >= $hpai_result_mean) {
                         $current_colour = $risk_level_4;
+                        $hpai_result_single["risk_level_final"] = 4;
                     } else if($hpai_result_single["risk_level_final"] >= $hpai_result_percentile_25) {
                         $current_colour = $risk_level_3;
+                        $hpai_result_single["risk_level_final"] = 3;
                     } else {
                         $current_colour = $risk_level_2;
+                        $hpai_result_single["risk_level_final"] = 2;
                     }
                 } else if(!$bool_initial_view) {
                     // Parsing colour hex according to the settings
