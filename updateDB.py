@@ -1,15 +1,20 @@
 #beg+++iKS03.02.2019 Update the results to the database
+import csv
 import datetime
-import pyodbc
+#import pyodbc
+import pymysql
 from os import listdir
 
-#connection = pymysql.connect(host="localhost",
-#                             user="riskdevapp",
-#                             password="riskdevapp",
-#                             db="riskdevapp",
-#                             charset="utf8mb4",
-#                             cursorclass=pymysql.cursors.DictCursor)
-connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
+epidemicType = "NIPAH"
+riskLvlFolderPath = "~/Repositories/RiskDevApp-WebApp/results/100Iterations/Final"
+
+connection = pymysql.connect(host="localhost",
+                             user="riskdevapp",
+                             password="riskdevapp",
+                             db="riskdevapp",
+                             charset="utf8mb4",
+                             cursorclass=pymysql.cursors.DictCursor)
+#connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
 try:
     with connection.cursor() as cursor:
         currentDate = datetime.datetime.today().strftime("%Y-%m-%d")

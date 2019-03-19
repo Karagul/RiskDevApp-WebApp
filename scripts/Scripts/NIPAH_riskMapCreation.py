@@ -17,7 +17,7 @@ def checkFileAndFolder(workingDirectory):  # Checking the required files and dir
     import sys
     # File
     pigPopPath = workingDirectory +'/PIG_POP.csv'
-    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    initialNodePath = workingDirectory + '/NIPAH_SubdistrictRisk_High.csv'
     emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder
@@ -857,7 +857,7 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
     
     # File
     pigPopPath = workingDirectory +'/PIG_POP.csv'
-    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    initialNodePath = workingDirectory + '/NIPAH_SubdistrictRisk_High.csv'
     emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder
@@ -865,8 +865,8 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
     inputFolder = workingDirectory + '/InputCSV'
     outPutFolder = workingDirectory +'/OutputCSV'    
     sirModelPath = workingDirectory +'/../scripts/R_model'
-
     riskLvlFolderPath = workingDirectory + '/100Iterations'
+    
     import os
     # Create main save folder
     if not os.path.exists(riskLvlFolderPath):
@@ -987,7 +987,7 @@ def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 
     
     # File
     pigPopPath = workingDirectory +'/Pig_POP.csv'
-    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    initialNodePath = workingDirectory + '/NIPAH_SubdistrictRisk_High.csv'
     emovementPath = workingDirectory + '/E_Movement_nipah_2017.csv'
 
     # Folder

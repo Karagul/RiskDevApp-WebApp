@@ -162,7 +162,13 @@ function refresh_param_list() {
 					current_background = "#CCFFEE";
 				}
 				//end+++iKS05.03.2019 Adding colors
-			
+            
+                //beg+++iKS14.03.2019 Fixing Greek alphabet
+                value.param_desc = value.param_desc.replace("[BETA]", "&beta;");
+                value.param_desc = value.param_desc.replace("[GAMMA]", "&gamma;");
+                value.param_desc = value.param_desc.replace("[SIGMA]", "&sigma;");
+                //end+++iKS14.03.2019 Fixing Greek alphabet
+
                 html += '<div class="col-md-4 col-sm-6">';
                 html += '   <div class="card text-center" style="background-color: ' + current_background + '">';
                 html += '       <div class="card-body p-3">';

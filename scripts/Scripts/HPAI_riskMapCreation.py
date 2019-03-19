@@ -17,7 +17,7 @@ def checkFileAndFolder(workingDirectory):  # Checking the required files and dir
     import sys
     # File
     pigPopPath = workingDirectory +'/POULTRY_POP.csv'
-    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    initialNodePath = workingDirectory + '/HPAI_SubdistrictRisk_High.csv'
     emovementPath = workingDirectory + '/E_Movement_HPAI_2017.csv'
 
     # Folder
@@ -857,7 +857,7 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
     
     # File
     pigPopPath = workingDirectory +'/POULTRY_POP.csv'
-    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    initialNodePath = workingDirectory + '/HPAI_SubdistrictRisk_High.csv'
     emovementPath = workingDirectory + '/E_Movement_HPAI_2017.csv'
 
     # Folder
@@ -987,7 +987,7 @@ def main(workingDirectory = 'C:/', cleanUpPeriod=0 ,beta=10, gamma=0.5 ,sigma = 
     
     # File
     pigPopPath = workingDirectory +'/POULTRY_POP.csv'
-    initialNodePath = workingDirectory + '/SubdistrictRisk_High.csv'
+    initialNodePath = workingDirectory + '/HPAI_SubdistrictRisk_High.csv'
     emovementPath = workingDirectory + '/E_Movement_HPAI_2017.csv'
 
     # Folder
@@ -1068,7 +1068,9 @@ if __name__ == "__main__":
     print(str(args.workingDirect) + '\n' + str(args.cleanUpPeriod) + '\n' + str(args.beta) + '\n' + str(args.gamma) + '\n' + str(args.sigma))
     # main(workingDirectory=args.workingDirect, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma) 
     
-    Model100Iterations(workingDirectory=args.workingDirect, maxIterations = 100, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma, maxLoop = 40, epidemicType='HPAI')
+    # Model100Iterations(workingDirectory=args.workingDirect, maxIterations = 100, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma, maxLoop = 40, epidemicType='HPAI')
+    # REMARKS: the previous line took a very long time on more powerful notebooks (than this server), hence we reduce to 10 iterations for now
+    Model100Iterations(workingDirectory=args.workingDirect, maxIterations = 10, cleanUpPeriod=args.cleanUpPeriod, beta=args.beta, gamma=args.gamma,  sigma=args.sigma, maxLoop = 40, epidemicType='HPAI')
     # python riskMapCreation.py D:/Works/RiskApp/Git_Source_Code 0 10 0.5
     
     # python riskMapCreation.py D:/RiskApp/SourceCode 14 10 0.5 6.5
