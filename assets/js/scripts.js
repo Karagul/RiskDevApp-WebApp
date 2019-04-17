@@ -11,7 +11,7 @@ function system_display_dialog(message) {
 // General Binding: On Document Ready
 $(document).ready(function() {
     refresh_execution_type();
-    refresh_execution_list();
+    //refresh_execution_list();
     refresh_file_type();
     refresh_file_list();
     refresh_param_list();
@@ -33,6 +33,8 @@ function refresh_execution_type() {
             });
             $("#actions-calculation-input-type").html(html);
             $("#actions-calculation-display-type").html('<option value="ALL">ทุกประเภท</option>' + html);
+			$("#actions-calculation-display-type").val("ALL");
+			refresh_execution_list();
         } catch(e) {
             system_display_dialog(data);
         }
@@ -41,7 +43,7 @@ function refresh_execution_type() {
 
 function refresh_execution_list() {
     $.get(current_web_location + "/services/execute_get_list.php", {
-        type: $("#actions-calculation-input-type").val(),
+        type: $("#actions-calculation-display-type").val(),
         return_type: "JSON"
     }, function(data, status) {
         try {
@@ -373,4 +375,8 @@ $("#actions-calculation-button-execute").click(function() {
         alert(data);
         refresh_execution_list();
     });
+});
+
+$("#actions-calculation-display-type").change(function() {
+	refresh_execution_list();
 });

@@ -5,13 +5,25 @@ if(isset($_GET["return_type"])) echo execute_get_list(true);
 
 function execute_get_list($bool_return_json) {
     global $db_conn;
-
-    $execute_list_query = $db_conn->prepare("SELECT execute_type_desc, result_for_year, execute_date, execute_status_desc
+	
+	if($_GET["type"] == "ALL") {
+		$execute_list_query = $db_conn->prepare("SELECT execute_type_desc, result_for_year, execute_date, execute_status_desc
                                                FROM execute_result
                                                JOIN execute_type ON execute_result.execute_type_name = execute_type.execute_type_name
                                                JOIN execute_status ON execute_result.execute_status_name = execute_status.execute_status_name
-                                              GROUP BY execute_result.execute_type_name, execute_result.result_for_year,
-													   execute_type.execute_type_desc, execute_date, execute_status_desc");
+                                              GROUP BY execute_type.execute_type_desc, execute_result.result_for_year, execute_date, execute_status_desc
+											  ORDER BY execute_type.execute_type_desc ASC, execute_result.result_for_year DESC");
+	} else {
+		$execute_list_query = $db_conn->prepare("SELECT execute_type_desc, result_for_year, execute_date, execute_status_desc
+                                               FROM execute_result
+                                               JOIN execute_type ON execute_result.execute_type_name = execute_type.execute_type_name
+                                               JOIN execute_status ON execute_result.execute_status_name = execute_status.execute_status_name
+											  WHERE execute_result.execute_type_name = :executeType
+                                              GROUP BY execute_type.execute_type_desc, execute_result.result_for_year, execute_date, execute_status_desc
+											  ORDER BY execute_type.execute_type_desc ASC, execute_result.result_for_year DESC");
+		$execute_list_query->bindValue(":executeType", $_GET["type"], PDO::PARAM_STR);
+	}
+	
     if($execute_list_query->execute()) {
         $execute_list_result = $execute_list_query->fetchAll();
         $execute_list_array = array();
