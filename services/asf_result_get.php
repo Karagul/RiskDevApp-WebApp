@@ -69,7 +69,7 @@ function asf_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
             foreach($asf_result_all as $asf_result_single) {
                 $asf_result_mean += $asf_result_single["risk_level_final"];
             }
-            $asf_result_mean /= count($asf_result_all);
+            if(count($asf_result_all) != 0) $asf_result_mean /= count($asf_result_all);
             
             // Finding the standard deviation
             $asf_result_std_sigma = 0.0;

@@ -69,7 +69,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
             foreach($nipah_result_all as $nipah_result_single) {
                 $nipah_result_mean += $nipah_result_single["risk_level_final"];
             }
-            $nipah_result_mean /= count($nipah_result_all);
+            if(count($nipah_result_all) != 0) $nipah_result_mean /= count($nipah_result_all);
             
             // Finding the standard deviation
             $nipah_result_std_sigma = 0.0;

@@ -69,7 +69,7 @@ function hpai_result_get($selected_year, $selected_subdistrict_code, $bool_with_
             foreach($hpai_result_all as $hpai_result_single) {
                 $hpai_result_mean += $hpai_result_single["risk_level_final"];
             }
-            $hpai_result_mean /= count($hpai_result_all);
+            if(count($hpai_result_all) != 0) $hpai_result_mean /= count($hpai_result_all);
             
             // Finding the standard deviation
             $hpai_result_std_sigma = 0.0;

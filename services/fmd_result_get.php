@@ -7,7 +7,7 @@ else fmd_result_get("2017", "140908;150306;170403;190502;200602;200605;240106;24
 
 function fmd_result_get($selected_year, $selected_subdistrict_code, $bool_with_normdist, $bool_initial_view) {
     global $db_conn;
-    
+
     //beg+++iKS12.12.2018 Allowing multiple source subdistricts
     if(strpos($selected_subdistrict_code, ";") !== false) {
         // Multiple source subdistricts detected
@@ -69,7 +69,8 @@ function fmd_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
             foreach($fmd_result_all as $fmd_result_single) {
                 $fmd_result_mean += $fmd_result_single["risk_level_final"];
             }
-            $fmd_result_mean /= count($fmd_result_all);
+
+            if(count($fmd_result_all) != 0) $fmd_result_mean /= count($fmd_result_all);
             
             // Finding the standard deviation
             $fmd_result_std_sigma = 0.0;
