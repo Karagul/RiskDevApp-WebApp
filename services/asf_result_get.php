@@ -40,8 +40,7 @@ function asf_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
                                                 WHERE execute_type_name = 'ASF'
                                                   AND result_for_year = :year
                                                 ORDER BY starting_subdistrict_code");
-        $asf_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
-    } else {
+    } else if($bool_with_normdist == false) {
         $asf_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
                                                       MAX(risk_level_final) AS risk_level_final
                                                  FROM execute_result
@@ -50,38 +49,20 @@ function asf_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
                                                   AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
                                                 GROUP BY resulting_subdistrict_code
                                                 ORDER BY resulting_subdistrict_code");
-        $asf_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+    } else if($bool_with_normdist == true) {
+        $asf_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
+                                                      MAX(risk_level_normdist) AS risk_level_final
+                                                 FROM execute_result
+                                                WHERE execute_type_name = 'ASF' 
+                                                  AND result_for_year = :year
+                                                  AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
+                                                GROUP BY resulting_subdistrict_code
+                                                ORDER BY resulting_subdistrict_code");
     }
     //end+++eKS12.12.2018 Allowing multiple source subdistricts
+    $asf_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
     if($asf_result_query->execute()) {
         $asf_result_all = $asf_result_query->fetchAll();
-
-        //beg+++iKS12.12.2018 Pre-calculating the normal distribution
-        if($bool_with_normdist == true) {
-            // Enabled: Display colour intensity according to the normal distribution
-            $asf_result_dof  = count($asf_result_all) - 1;
-            $asf_result_mean = 0.0;
-            $asf_result_std  = 0.0;
-
-            if($asf_result_dof == 0) $asf_result_dof = 1;
-
-            // Finding the mean
-            foreach($asf_result_all as $asf_result_single) {
-                $asf_result_mean += $asf_result_single["risk_level_final"];
-            }
-            if(count($asf_result_all) != 0) $asf_result_mean /= count($asf_result_all);
-            
-            // Finding the standard deviation
-            $asf_result_std_sigma = 0.0;
-            foreach($asf_result_all as $asf_result_single) {
-                $asf_result_std_sigma += pow($asf_result_single["risk_level_final"] - $asf_result_mean, 2);
-            }
-            $asf_result_std = sqrt($asf_result_std_sigma / $asf_result_dof);
-
-            $asf_result_percentile_75 = $asf_result_mean + (0.675 * $asf_result_std);
-            $asf_result_percentile_25 = $asf_result_mean - (0.675 * $asf_result_std);
-        }
-        //end+++iKS12.12.2018 Pre-calculating the normal distribution
         
         $asf_result_array = array("type" => "FeatureCollection",
                                   "features" => array());
@@ -117,22 +98,7 @@ function asf_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
                 }
 				
                 // Parsing Colour Hex
-                if($bool_with_normdist) {
-                    // Parsing colour hex according to the normal distribution
-                    if($asf_result_single["risk_level_final"] >= $asf_result_percentile_75) {
-                        $current_colour = $risk_level_5;
-                        $asf_result_single["risk_level_final"] = 5;
-                    } else if($asf_result_single["risk_level_final"] >= $asf_result_mean) {
-                        $current_colour = $risk_level_4;
-                        $asf_result_single["risk_level_final"] = 4;
-                    } else if($asf_result_single["risk_level_final"] >= $asf_result_percentile_25) {
-                        $current_colour = $risk_level_3;
-                        $asf_result_single["risk_level_final"] = 3;
-                    } else {
-                        $current_colour = $risk_level_2;
-                        $asf_result_single["risk_level_final"] = 2;
-                    }
-                } else if(!$bool_initial_view) {
+                if($bool_initial_view == false) {
                     // Parsing colour hex according to the settings
                     switch($asf_result_single["risk_level_final"]) {
                         case 5: $current_colour = $risk_level_5; break;

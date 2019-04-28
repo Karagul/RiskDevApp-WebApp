@@ -2,8 +2,9 @@
 require_once dirname(__FILE__)."/../config.php";
 
 //if(isset($_GET["result_type"]) && isset($_GET["year"]) && isset($_GET["source"])) FMD_result_get($_GET["year"], $_GET["source"]);
-if(isset($_GET["year"]) && isset($_GET["source"])) fmd_result_get($_GET["year"], $_GET["source"], $_GET["with_normdist"], $_GET["initial_view"]);
-else fmd_result_get("2017", "140908;150306;170403;190502;200602;200605;240106;240107;240211;240212;260307;260308", "True", "False");
+// if(isset($_GET["year"]) && isset($_GET["source"])) fmd_result_get($_GET["year"], $_GET["source"], $_GET["with_normdist"], $_GET["initial_view"]);
+// else fmd_result_get("2017", "140908;150306;170403;190502;200602;200605;240106;240107;240211;240212;260307;260308", "True", "False");
+fmd_result_get("2017", "160109;160201;160202;160203;160204;160207;160208;160406;160407;160701;161001;161002;161003;161006;191101;191102;191104;191107;191109;191201;191203;200207;200301;200707;220703;270401;270406;270704;270902;300210;300302;300305;300805;301405;301807;301808;302001;302004;302005;302007;302009;302010;302101;302102;302103;302106;302107;302112;302503;311205;360901;360902;400110;400118;400711;420703;421301;501201;501305;501306;502101;502102;502103;502301;502302;502303;510201;510702;570906;630503;700405;700505;700506;700509;700702;700707;710106;710113;710502;710503;710504;710505;710506;710515;710517;710602;710603;710606;710609;710610;710613;711102;711201;730120;730121;730125;730203;730207;730210;730213;730214;760401;760404;760408;760513;760709;760804;770102;770103;770105;770106;770201;770202;770206;770207;770305;770504;770602;770607;770703;770705;770802;770803;770805;860202;860304;900104;900401;930108;930109;930203;930505;931101", "True", "False");
 
 function fmd_result_get($selected_year, $selected_subdistrict_code, $bool_with_normdist, $bool_initial_view) {
     global $db_conn;
@@ -40,8 +41,7 @@ function fmd_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
                                                 WHERE execute_type_name = 'FMD'
                                                   AND result_for_year = :year
                                                 ORDER BY starting_subdistrict_code");
-        $fmd_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
-    } else {
+    } else if($bool_with_normdist == false) {
         $fmd_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
                                                       MAX(risk_level_final) AS risk_level_final
                                                  FROM execute_result
@@ -50,39 +50,21 @@ function fmd_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
                                                   AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
                                                 GROUP BY resulting_subdistrict_code
                                                 ORDER BY resulting_subdistrict_code");
-        $fmd_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+    } else if($bool_with_normdist == true) {
+        $fmd_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
+                                                      MAX(risk_level_normdist) AS risk_level_final
+                                                 FROM execute_result
+                                                WHERE execute_type_name = 'FMD' 
+                                                  AND result_for_year = :year
+                                                  AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
+                                                GROUP BY resulting_subdistrict_code
+                                                ORDER BY resulting_subdistrict_code");
     }
+    $fmd_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
     //end+++eKS12.12.2018 Allowing multiple source subdistricts
     if($fmd_result_query->execute()) {
         $fmd_result_all = $fmd_result_query->fetchAll();
-
-        //beg+++iKS12.12.2018 Pre-calculating the normal distribution
-        if($bool_with_normdist == true) {
-            // Enabled: Display colour intensity according to the normal distribution
-            $fmd_result_dof  = count($fmd_result_all) - 1;
-            $fmd_result_mean = 0.0;
-            $fmd_result_std  = 0.0;
-
-            if($fmd_result_dof == 0) $fmd_result_dof = 1;
-
-            // Finding the mean
-            foreach($fmd_result_all as $fmd_result_single) {
-                $fmd_result_mean += $fmd_result_single["risk_level_final"];
-            }
-
-            if(count($fmd_result_all) != 0) $fmd_result_mean /= count($fmd_result_all);
-            
-            // Finding the standard deviation
-            $fmd_result_std_sigma = 0.0;
-            foreach($fmd_result_all as $fmd_result_single) {
-                $fmd_result_std_sigma += pow($fmd_result_single["risk_level_final"] - $fmd_result_mean, 2);
-            }
-            $fmd_result_std = sqrt($fmd_result_std_sigma / $fmd_result_dof);
-
-            $fmd_result_percentile_75 = $fmd_result_mean + (0.675 * $fmd_result_std);
-            $fmd_result_percentile_25 = $fmd_result_mean - (0.675 * $fmd_result_std);
-        }
-        //end+++iKS12.12.2018 Pre-calculating the normal distribution
+        die(var_dump($fmd_result_all));
         
         $fmd_result_array = array("type" => "FeatureCollection",
                                   "features" => array());
@@ -118,22 +100,7 @@ function fmd_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
                 }
 				
                 // Parsing Colour Hex
-                if($bool_with_normdist) {
-                    // Parsing colour hex according to the normal distribution
-                    if($fmd_result_single["risk_level_final"] >= $fmd_result_percentile_75) {
-                        $current_colour = $risk_level_5;
-                        $fmd_result_single["risk_level_final"] = 5;
-                    } else if($fmd_result_single["risk_level_final"] >= $fmd_result_mean) {
-                        $current_colour = $risk_level_4;
-                        $fmd_result_single["risk_level_final"] = 4;
-                    } else if($fmd_result_single["risk_level_final"] >= $fmd_result_percentile_25) {
-                        $current_colour = $risk_level_3;
-                        $fmd_result_single["risk_level_final"] = 3;
-                    } else {
-                        $current_colour = $risk_level_2;
-                        $fmd_result_single["risk_level_final"] = 2;
-                    }
-                } else if(!$bool_initial_view) {
+                if($bool_initial_view == false) {
                     // Parsing colour hex according to the settings
                     switch($fmd_result_single["risk_level_final"]) {
                         case 5: $current_colour = $risk_level_5; break;

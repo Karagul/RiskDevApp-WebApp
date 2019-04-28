@@ -40,8 +40,7 @@ function hpai_result_get($selected_year, $selected_subdistrict_code, $bool_with_
                                                 WHERE execute_type_name = 'HPAI'
                                                   AND result_for_year = :year
                                                 ORDER BY starting_subdistrict_code");
-        $hpai_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
-    } else {
+    } else if($bool_with_normdist == false) {
         $hpai_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
                                                       MAX(risk_level_final) AS risk_level_final
                                                  FROM execute_result
@@ -50,38 +49,21 @@ function hpai_result_get($selected_year, $selected_subdistrict_code, $bool_with_
                                                   AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
                                                 GROUP BY resulting_subdistrict_code
                                                 ORDER BY resulting_subdistrict_code");
-        $hpai_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+        
+    } else if($bool_with_normdist == true) {
+        $hpai_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
+                                                      MAX(risk_level_normdist) AS risk_level_final
+                                                 FROM execute_result
+                                                WHERE execute_type_name = 'HPAI' 
+                                                  AND result_for_year = :year
+                                                  AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
+                                                GROUP BY resulting_subdistrict_code
+                                                ORDER BY resulting_subdistrict_code");
     }
+    $hpai_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
     //end+++eKS12.12.2018 Allowing multiple source subdistricts
     if($hpai_result_query->execute()) {
         $hpai_result_all = $hpai_result_query->fetchAll();
-
-        //beg+++iKS12.12.2018 Pre-calculating the normal distribution
-        if($bool_with_normdist == true) {
-            // Enabled: Display colour intensity according to the normal distribution
-            $hpai_result_dof  = count($hpai_result_all) - 1;
-            $hpai_result_mean = 0.0;
-            $hpai_result_std  = 0.0;
-
-            if($hpai_result_dof == 0) $hpai_result_dof = 1;
-
-            // Finding the mean
-            foreach($hpai_result_all as $hpai_result_single) {
-                $hpai_result_mean += $hpai_result_single["risk_level_final"];
-            }
-            if(count($hpai_result_all) != 0) $hpai_result_mean /= count($hpai_result_all);
-            
-            // Finding the standard deviation
-            $hpai_result_std_sigma = 0.0;
-            foreach($hpai_result_all as $hpai_result_single) {
-                $hpai_result_std_sigma += pow($hpai_result_single["risk_level_final"] - $hpai_result_mean, 2);
-            }
-            $hpai_result_std = sqrt($hpai_result_std_sigma / $hpai_result_dof);
-
-            $hpai_result_percentile_75 = $hpai_result_mean + (0.675 * $hpai_result_std);
-            $hpai_result_percentile_25 = $hpai_result_mean - (0.675 * $hpai_result_std);
-        }
-        //end+++iKS12.12.2018 Pre-calculating the normal distribution
         
         $hpai_result_array = array("type" => "FeatureCollection",
                                   "features" => array());
@@ -117,22 +99,7 @@ function hpai_result_get($selected_year, $selected_subdistrict_code, $bool_with_
                 }
 				
                 // Parsing Colour Hex
-                if($bool_with_normdist) {
-                    // Parsing colour hex according to the normal distribution
-                    if($hpai_result_single["risk_level_final"] >= $hpai_result_percentile_75) {
-                        $current_colour = $risk_level_5;
-                        $hpai_result_single["risk_level_final"] = 5;
-                    } else if($hpai_result_single["risk_level_final"] >= $hpai_result_mean) {
-                        $current_colour = $risk_level_4;
-                        $hpai_result_single["risk_level_final"] = 4;
-                    } else if($hpai_result_single["risk_level_final"] >= $hpai_result_percentile_25) {
-                        $current_colour = $risk_level_3;
-                        $hpai_result_single["risk_level_final"] = 3;
-                    } else {
-                        $current_colour = $risk_level_2;
-                        $hpai_result_single["risk_level_final"] = 2;
-                    }
-                } else if(!$bool_initial_view) {
+                if($bool_initial_view == false) {
                     // Parsing colour hex according to the settings
                     switch($hpai_result_single["risk_level_final"]) {
                         case 5: $current_colour = $risk_level_5; break;

@@ -40,8 +40,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                                                 WHERE execute_type_name = 'NIPAH'
                                                   AND result_for_year = :year
                                                 ORDER BY starting_subdistrict_code");
-        $nipah_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
-    } else {
+    } else if($bool_with_normdist == false) {
         $nipah_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
                                                       MAX(risk_level_final) AS risk_level_final
                                                  FROM execute_result
@@ -50,38 +49,20 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                                                   AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
                                                 GROUP BY resulting_subdistrict_code
                                                 ORDER BY resulting_subdistrict_code");
-        $nipah_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
+    } else if($bool_with_normdist == true) {
+        $nipah_result_query = $db_conn->prepare("SELECT resulting_subdistrict_code,
+                                                      MAX(risk_level_normdist) AS risk_level_final
+                                                 FROM execute_result
+                                                WHERE execute_type_name = 'NIPAH' 
+                                                  AND result_for_year = :year
+                                                  AND starting_subdistrict_code IN (".implode(",", $subdistrict_array).")
+                                                GROUP BY resulting_subdistrict_code
+                                                ORDER BY resulting_subdistrict_code");
     }
+    $nipah_result_query->bindValue(":year", $selected_year, PDO::PARAM_STR);
     //end+++eKS12.12.2018 Allowing multiple source subdistricts
     if($nipah_result_query->execute()) {
         $nipah_result_all = $nipah_result_query->fetchAll();
-
-        //beg+++iKS12.12.2018 Pre-calculating the normal distribution
-        if($bool_with_normdist == true) {
-            // Enabled: Display colour intensity according to the normal distribution
-            $nipah_result_dof  = count($nipah_result_all) - 1;
-            $nipah_result_mean = 0.0;
-            $nipah_result_std  = 0.0;
-
-            if($nipah_result_dof == 0) $nipah_result_dof = 1;
-
-            // Finding the mean
-            foreach($nipah_result_all as $nipah_result_single) {
-                $nipah_result_mean += $nipah_result_single["risk_level_final"];
-            }
-            if(count($nipah_result_all) != 0) $nipah_result_mean /= count($nipah_result_all);
-            
-            // Finding the standard deviation
-            $nipah_result_std_sigma = 0.0;
-            foreach($nipah_result_all as $nipah_result_single) {
-                $nipah_result_std_sigma += pow($nipah_result_single["risk_level_final"] - $nipah_result_mean, 2);
-            }
-            $nipah_result_std = sqrt($nipah_result_std_sigma / $nipah_result_dof);
-
-            $nipah_result_percentile_75 = $nipah_result_mean + (0.675 * $nipah_result_std);
-            $nipah_result_percentile_25 = $nipah_result_mean - (0.675 * $nipah_result_std);
-        }
-        //end+++iKS12.12.2018 Pre-calculating the normal distribution
         
         $nipah_result_array = array("type" => "FeatureCollection",
                                   "features" => array());
@@ -117,22 +98,7 @@ function nipah_result_get($selected_year, $selected_subdistrict_code, $bool_with
                 }
 				
                 // Parsing Colour Hex
-                if($bool_with_normdist) {
-                    // Parsing colour hex according to the normal distribution
-                    if($nipah_result_single["risk_level_final"] >= $nipah_result_percentile_75) {
-                        $current_colour = $risk_level_5;
-                        $nipah_result_single["risk_level_final"] = 5;
-                    } else if($nipah_result_single["risk_level_final"] >= $nipah_result_mean) {
-                        $current_colour = $risk_level_4;
-                        $nipah_result_single["risk_level_final"] = 4;
-                    } else if($nipah_result_single["risk_level_final"] >= $nipah_result_percentile_25) {
-                        $current_colour = $risk_level_3;
-                        $nipah_result_single["risk_level_final"] = 3;
-                    } else {
-                        $current_colour = $risk_level_2;
-                        $nipah_result_single["risk_level_final"] = 2;
-                    }
-                } else if(!$bool_initial_view) {
+                if($bool_initial_view == false) {
                     // Parsing colour hex according to the settings
                     switch($nipah_result_single["risk_level_final"]) {
                         case 5: $current_colour = $risk_level_5; break;
