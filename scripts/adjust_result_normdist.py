@@ -1,25 +1,26 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pymysql
+import pyodbc
 
-db_connection = pymysql.connect(host="localhost", user="riskdevapp", password="riskdevapp", db="riskdevapp", charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor)
+#db_connection = pymysql.connect(host="localhost", user="riskdevapp", password="riskdevapp", db="riskdevapp", charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor)
+db_connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
 
 with db_connection.cursor() as db_cursor:
-    for current_result_type in ("FMD", "HPAI", "NIPAH"):
+    for current_result_type in ("ASF", "FMD", "HPAI", "NIPAH"):
         print("Current result type: {result_type}".format(
             result_type = current_result_type
         ))
 
-        result_fetch_query = """SELECT execute_type_name, result_for_year, starting_subdistrict_code, resulting_subdistrict_code, risk_level_final
+        result_fetch_query = """\
+                              SELECT execute_type_name, result_for_year, starting_subdistrict_code, resulting_subdistrict_code, risk_level_final
                                 FROM execute_result
                                WHERE execute_type_name = '{execute_type_name}' 
-                                 AND result_for_year = '2017'""".format(
+                                 AND result_for_year = '2017';""".format(
                                      execute_type_name = current_result_type
                                  )
-        db_cursor.execute(result_fetch_query)
-        execute_result = pd.DataFrame(db_cursor.fetchall())
-        execute_result["Risk NormDist"] = 0.0
+        #db_cursor.execute(result_fetch_query)
+        #execute_result = pd.DataFrame(db_cursor.fetchall())
+        execute_result = pd.read_sql(result_fetch_query, db_connection)
 
         result_describe = execute_result["risk_level_final"].describe()
         result_mean  = result_describe["mean"]
@@ -50,9 +51,9 @@ with db_connection.cursor() as db_cursor:
                                          starting_subdistrict_code = row_data["starting_subdistrict_code"],
                                          resulting_subdistrict_code = row_data["resulting_subdistrict_code"]
                                      )
-            #db_cursor.execute(update_query)
+            db_cursor.execute(update_query)
 
-        #db_connection.commit()
+        db_connection.commit()
 
         print("Processing for {result_type} is completed".format(
             result_type = current_result_type
