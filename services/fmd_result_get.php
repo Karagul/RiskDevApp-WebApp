@@ -64,7 +64,6 @@ function fmd_result_get($selected_year, $selected_subdistrict_code, $bool_with_n
     //end+++eKS12.12.2018 Allowing multiple source subdistricts
     if($fmd_result_query->execute()) {
         $fmd_result_all = $fmd_result_query->fetchAll();
-        die(var_dump($fmd_result_all));
         
         $fmd_result_array = array("type" => "FeatureCollection",
                                   "features" => array());
