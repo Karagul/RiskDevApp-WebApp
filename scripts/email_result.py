@@ -7,13 +7,13 @@ import sys
 import xlsxwriter
 
 def translate_normdist_desc(desc):
-    if desc == "VERY HIGH":
+    if desc[0] == "4":
         return "สูงมาก"
-    elif desc == "HIGH":
+    elif desc[0] == "3":
         return "สูง"
-    elif desc == "MEDIUM":
+    elif desc[0] == "2":
         return "ปานกลาง"
-    elif desc == "LOW":
+    elif desc[0] == "1":
         return "ต่ำ"
     else:
         return "N/A"
@@ -139,9 +139,9 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
 
     # Email settings
     email_from          = "dev.riskapp@gmail.com"
-    email_port          = 465 # With SSL enabled
+    email_port          = 587#465 # With SSL enabled
     email_password      = "riskdevapp2018"
-    email_server        = "smtp.gmail.com"
+    email_server        = "localhost"#"smtp.gmail.com"
     email_to            = email_recipient
 
     try:
