@@ -139,9 +139,9 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
 
     # Email settings
     email_from          = "dev.riskapp@gmail.com"
-    email_port          = 587#465 # With SSL enabled
+    email_port          = 465 # With SSL enabled
     email_password      = "riskdevapp2018"
-    email_server        = "localhost"#"smtp.gmail.com"
+    email_server        = "smtp.gmail.com"
     email_to            = email_recipient
 
     try:
@@ -191,6 +191,6 @@ if __name__ == "__main__":
     parser.add_argument("email_recipient", metavar="", type=str, help="")
     parser.add_argument("subdistrict_list", metavar="", type=str, help="")
 
-    #args = parser.parse_args()
-    #main(args.result_type, args.result_year, args.email_recipient, args.subdistrict_list)
-    main("FMD", "2017", "k.sutassananon@gmail.com", "160109-160201")
+    args = parser.parse_args()
+    main(args.result_type, args.result_year, args.email_recipient, args.subdistrict_list)
+    #main("FMD", "2017", "k.sutassananon@gmail.com", "160109-160201")
