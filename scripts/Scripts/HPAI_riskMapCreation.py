@@ -951,6 +951,7 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
 
     #beg+++iKS03.02.2019 Update the results to the database
     import datetime
+    import pandas as pd
     import pyodbc
     from os import listdir
 
@@ -962,13 +963,14 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
     #                             cursorclass=pymysql.cursors.DictCursor)
     connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
     try:
+        # Firstly, create records in the database
         with connection.cursor() as cursor:
             currentDate = datetime.datetime.today().strftime("%Y-%m-%d")
             for file in listdir(riskLvlFolderPath):
                 currentFile = csv.reader(open(riskLvlFolderPath + "/" + file, "r"))
                 currentSubdistrict = file[0:6]
                 for row in currentFile:
-                    insertQuery = "INSERT INTO execute_result VALUES('{epidemicType}', '2017', '{date}', '{user}', 'READY', '{sourceSubdistrict}', '{resultSubdistrict}', '{riskLevel}')".format(
+                    insertQuery = "INSERT INTO execute_result VALUES('{epidemicType}', '2017', '{date}', '{user}', 'READY', '{sourceSubdistrict}', '{resultSubdistrict}', '{riskLevel}', '0')".format(
                         epidemicType = epidemicType,
                         date = currentDate,
                         user = "RiskDevApp",
@@ -978,6 +980,47 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
                     )
                     cursor.execute(insertQuery)
         connection.commit()
+
+        # Then, update with the normal distribution calculation
+        with connection.cursor() as cursor:
+            result_fetch_query = """\
+                                  SELECT execute_type_name, result_for_year, starting_subdistrict_code, resulting_subdistrict_code, risk_level_final
+                                    FROM execute_result
+                                   WHERE execute_type_name = 'HPAI' 
+                                     AND result_for_year = '2017';"""
+            execute_result = pd.read_sql(result_fetch_query, connection)
+
+            result_describe = execute_result["risk_level_final"].describe()
+            result_mean  = result_describe["mean"]
+            result_25q   = result_describe["25%"]
+            result_75q   = result_describe["75%"]
+
+            for row_index, row_data in execute_result.iterrows():
+                risk_normdist = "N/A"
+
+                if row_data["risk_level_final"] >= result_75q:
+                    risk_normdist = "5"
+                elif row_data["risk_level_final"] >= result_mean:
+                    risk_normdist = "4"
+                elif row_data["risk_level_final"] >= result_25q:
+                    risk_normdist = "3"
+                else:
+                    risk_normdist = "2"
+
+                update_query = """UPDATE execute_result 
+                                         SET risk_level_normdist = '{risk_normdist}' 
+                                       WHERE execute_type_name = '{execute_type_name}'
+                                         AND result_for_year = '{result_for_year}'
+                                         AND starting_subdistrict_code = '{starting_subdistrict_code}'
+                                         AND resulting_subdistrict_code = '{resulting_subdistrict_code}'""".format(
+                                             risk_normdist = risk_normdist,
+                                             execute_type_name = row_data["execute_type_name"],
+                                             result_for_year = row_data["result_for_year"],
+                                             starting_subdistrict_code = row_data["starting_subdistrict_code"],
+                                             resulting_subdistrict_code = row_data["resulting_subdistrict_code"]
+                                         )
+                cursor.execute(update_query)
+            connection.commit()
     finally:
         connection.close()
     #end+++iKS03.02.2019 Update the results to the database

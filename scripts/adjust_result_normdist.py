@@ -31,13 +31,13 @@ with db_connection.cursor() as db_cursor:
             risk_normdist = "N/A"
 
             if row_data["risk_level_final"] >= result_75q:
-                risk_normdist = "VERY HIGH"
+                risk_normdist = "5"
             elif row_data["risk_level_final"] >= result_mean:
-                risk_normdist = "HIGH"
+                risk_normdist = "4"
             elif row_data["risk_level_final"] >= result_25q:
-                risk_normdist = "MEDIUM"
+                risk_normdist = "3"
             else:
-                risk_normdist = "LOW"
+                risk_normdist = "2"
 
             update_query = """UPDATE execute_result 
                                      SET risk_level_normdist = '{risk_normdist}' 
