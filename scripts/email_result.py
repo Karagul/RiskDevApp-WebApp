@@ -24,7 +24,7 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
         #db_connection = pymysql.connect(host="localhost", user="riskdevapp", password="riskdevapp", db="riskdevapp", charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor)
         db_connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
     except:
-        print("[ERROR] ไม่สามารถเชื่อมต่อกับระบบฐานข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ")
+        print("ERR-CONNECTION")
         exit
 
     try:
@@ -112,7 +112,7 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
             excel_writer.save()
             return buffer.getvalue()
     except Exception as e:
-        print("[ERROR] ไม่สามารถอ่านไฟล์ข้อมูลประชากรสัตว์ได้ กรุณาติดต่อผู้ดูแลระบบ")
+        print("ERR-INPUTFILE")
         print(sys.exc_info()[0])
         print("At line [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
         exit
@@ -176,9 +176,9 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
             smtp_instance.login(email_from, email_password)
             smtp_instance.sendmail(email_message_main["From"], email_message_main["To"], email_message_main.as_string())
             smtp_instance.quit()
-        print("ส่งอีเมลเรียบร้อยแล้ว")
-    except Exception as e:
-        print("ไม่สามารถส่งอีเมลได้ กรุณาติดต่อผู้ดูแลระบบ")
+        print("OK")
+    except Exception:
+        print("ERR-EMAIL")
         print(sys.exc_info())
         print("At line [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
 
