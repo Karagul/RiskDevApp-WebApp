@@ -7,13 +7,13 @@ import sys
 import xlsxwriter
 
 def translate_normdist_desc(desc):
-    if desc[0] == "4":
+    if desc[0] == "5":
         return "สูงมาก"
-    elif desc[0] == "3":
+    elif desc[0] == "4":
         return "สูง"
-    elif desc[0] == "2":
+    elif desc[0] == "3":
         return "ปานกลาง"
-    elif desc[0] == "1":
+    elif desc[0] == "2":
         return "ต่ำ"
     else:
         return "N/A"
@@ -38,9 +38,11 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
         file_output_dataframe["District"]          = "DISTRICT"
         file_output_dataframe["Subdistrict"]       = "SUBDISTRICT"
         file_output_dataframe["RiskLevel"]         = "RISKLEVEL"
+        file_output_dataframe["RiskNormDist"]      = "N/A"
         file_output_dataframe["SourceSubdistrict"] = "SOURCESUBDISTRICT"
         file_output_dataframe["AnimalType"]        = "ANIMALTYPE"
-        file_output_dataframe["RiskNormDist"]      = "N/A"
+
+        file_output_dataframe.to_csv("initial-modified.csv", encoding="utf-8", index=False)
 
         # Populating the information
         with db_connection.cursor() as db_cursor:
@@ -72,34 +74,38 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
                     )
                 #db_cursor.execute(resulting_subdistrict_query)
                 #query_result_ressub = db_cursor.fetchall()
-                query_result_ressub = pd.read_sql(resulting_subdistrict_query, db_connection)
-                file_output_dataframe.at[row_index, "Province"] = query_result_ressub.iloc[0]["province_name_th"]
-                file_output_dataframe.at[row_index, "District"] = query_result_ressub.iloc[0]["district_name_th"].replace("กิ่งอำเภอ", "")
-                file_output_dataframe.at[row_index, "Subdistrict"] = query_result_ressub.iloc[0]["subdistrict_name_th"]
-                file_output_dataframe.at[row_index, "RiskLevel"] = query_result_ressub.iloc[0]["risk_level_final"]
-                file_output_dataframe.at[row_index, "RiskNormDist"] = translate_normdist_desc(query_result_ressub.iloc[0]["risk_level_normdist"])
-                file_output_dataframe.at[row_index, "SourceSubdistrict"] = query_result_ressub.iloc[0]["starting_subdistrict_code"]
-                
-                # Query for starting subdistrict information
-                starting_subdistrict_query = """\
-                    SELECT DISTINCT province_name_th, district_name_th, subdistrict_name_th
-                      FROM subdistrict_master
-                      JOIN district_master ON subdistrict_master.district_code = district_master.district_code
-                      JOIN province_master ON district_master.province_code = province_master.province_code
-                     WHERE subdistrict_code = '{subdistrict_code}'
-                """.format(subdistrict_code = query_result_ressub.iloc[0]["starting_subdistrict_code"])
-                #db_cursor.execute(starting_subdistrict_query)
-                #query_result_stasub = db_cursor.fetchall()
-                query_result_stasub = pd.read_sql(starting_subdistrict_query, db_connection)
-                file_output_dataframe.at[row_index, "SourceSubdistrict"] = "จ.{province_name} อ.{district_name} ต.{subdistrict_name}".format(
-                    province_name = query_result_stasub.iloc[0]["province_name_th"],
-                    district_name = query_result_stasub.iloc[0]["district_name_th"].replace("กิ่งตำบล", ""),
-                    subdistrict_name = query_result_stasub.iloc[0]["subdistrict_name_th"]
-                )
-
-                # Adding animal description
-                file_output_dataframe.at[row_index, "AnimalType"] = animal_master_table[str(row_data["ANIMAL_CODE"])]
-
+                try:
+                    query_result_ressub = pd.read_sql(resulting_subdistrict_query, db_connection)
+                    file_output_dataframe.at[row_index, "Province"] = query_result_ressub.iloc[0]["province_name_th"]
+                    file_output_dataframe.at[row_index, "District"] = query_result_ressub.iloc[0]["district_name_th"].replace("กิ่งอำเภอ", "")
+                    file_output_dataframe.at[row_index, "Subdistrict"] = query_result_ressub.iloc[0]["subdistrict_name_th"]
+                    file_output_dataframe.at[row_index, "RiskLevel"] = query_result_ressub.iloc[0]["risk_level_final"]
+                    file_output_dataframe.at[row_index, "RiskNormDist"] = translate_normdist_desc(query_result_ressub.iloc[0]["risk_level_normdist"])
+                    file_output_dataframe.at[row_index, "SourceSubdistrict"] = query_result_ressub.iloc[0]["starting_subdistrict_code"]
+                    
+                    # Query for starting subdistrict information
+                    starting_subdistrict_query = """\
+                        SELECT DISTINCT province_name_th, district_name_th, subdistrict_name_th
+                            FROM subdistrict_master
+                           JOIN district_master ON subdistrict_master.district_code = district_master.district_code
+                          JOIN province_master ON district_master.province_code = province_master.province_code
+                         WHERE subdistrict_code = '{subdistrict_code}'
+                    """.format(subdistrict_code = query_result_ressub.iloc[0]["starting_subdistrict_code"])
+                    #db_cursor.execute(starting_subdistrict_query)
+                    #query_result_stasub = db_cursor.fetchall()
+                    query_result_stasub = pd.read_sql(starting_subdistrict_query, db_connection)
+                    file_output_dataframe.at[row_index, "SourceSubdistrict"] = "จ.{province_name} อ.{district_name} ต.{subdistrict_name}".format(
+                        province_name = query_result_stasub.iloc[0]["province_name_th"],
+                        district_name = query_result_stasub.iloc[0]["district_name_th"].replace("กิ่งตำบล", ""),
+                        subdistrict_name = query_result_stasub.iloc[0]["subdistrict_name_th"]
+                    )
+                        
+                    # Adding animal description
+                    file_output_dataframe.at[row_index, "AnimalType"] = animal_master_table[str(row_data["ANIMAL_CODE"])]
+                except:
+                    print("ERR-INPUTFILE")
+                    exit
+                    
         # Change column name from EN to TH
         file_output_dataframe = file_output_dataframe.sort_values(["Province", "District", "Subdistrict", "RiskLevel", "RiskNormDist", "AnimalTotal"], ascending=[True, True, True, False, False, False])
         file_output_dataframe.columns = ["รหัสตำบล", "รหัสสัตว์", "จำนวนสัตว์ในตำบล", "จังหวัด", "อำเภอ", "ตำบล", "ค่าความเสี่ยง", "ระดับความเสี่ยง", "ตำบลเริ่มต้น", "ประเภทสัตว์"]        
@@ -109,8 +115,10 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
             #file_output_dataframe[["จังหวัด", "อำเภอ", "ตำบล", "ระดับความเสี่ยง", "จำนวนสัตว์ในตำบล", "ตำบลเริ่มต้น"]].to_csv(buffer, index=False, encoding="utf8")
             excel_writer = pd.ExcelWriter(buffer)
             file_output_dataframe[["จังหวัด", "อำเภอ", "ตำบล", "ค่าความเสี่ยง", "ระดับความเสี่ยง", "ประเภทสัตว์", "จำนวนสัตว์ในตำบล", "ตำบลเริ่มต้น"]].to_excel(excel_writer, index=False, encoding="utf8", merge_cells=True)
+            file_output_dataframe[["จังหวัด", "อำเภอ", "ตำบล", "ค่าความเสี่ยง", "ระดับความเสี่ยง", "ประเภทสัตว์", "จำนวนสัตว์ในตำบล", "ตำบลเริ่มต้น"]].to_csv("test.csv", encoding="utf8")
             excel_writer.save()
             return buffer.getvalue()
+        exit
     except Exception as e:
         print("ERR-INPUTFILE")
         print(sys.exc_info()[0])
@@ -191,6 +199,6 @@ if __name__ == "__main__":
     parser.add_argument("email_recipient", metavar="", type=str, help="")
     parser.add_argument("subdistrict_list", metavar="", type=str, help="")
 
-    args = parser.parse_args()
-    main(args.result_type, args.result_year, args.email_recipient, args.subdistrict_list)
-    #main("FMD", "2017", "k.sutassananon@gmail.com", "160109-160201")
+    #args = parser.parse_args()
+    #main(args.result_type, args.result_year, args.email_recipient, args.subdistrict_list)
+    main("FMD", "2017", "k.sutassananon@gmail.com", "130203-220503")
