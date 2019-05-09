@@ -34,24 +34,20 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
         file_output_dataframe = file_input_dataframe[file_input_dataframe["SubDistrictCode"].isin(subdistrict_list)]
         
         # Creating the output dataframe
-        file_output_dataframe["Province"]          = "PROVINCE"
-        file_output_dataframe["District"]          = "DISTRICT"
-        file_output_dataframe["Subdistrict"]       = "SUBDISTRICT"
-        file_output_dataframe["RiskLevel"]         = "RISKLEVEL"
+        file_output_dataframe["Province"]          = "N/A"
+        file_output_dataframe["District"]          = "N/A"
+        file_output_dataframe["Subdistrict"]       = "N/A"
+        file_output_dataframe["RiskLevel"]         = "N/A"
         file_output_dataframe["RiskNormDist"]      = "N/A"
-        file_output_dataframe["SourceSubdistrict"] = "SOURCESUBDISTRICT"
-        file_output_dataframe["AnimalType"]        = "ANIMALTYPE"
-
-        file_output_dataframe.to_csv("initial-modified.csv", encoding="utf-8", index=False)
+        file_output_dataframe["SourceSubdistrict"] = "N/A"
+        file_output_dataframe["AnimalType"]        = "N/A"
 
         # Populating the information
         with db_connection.cursor() as db_cursor:
             # Fetching animal master table
             animal_master_query = "SELECT animal_code, animal_name FROM animal_master;"
-            #db_cursor.execute(animal_master_query)
-            #animal_master_data = db_cursor.fetchall()
             animal_master_data = pd.read_sql(animal_master_query, db_connection)
-
+            
             animal_master_table = dict()
             for row_index, row_data in animal_master_data.iterrows():
                 animal_master_table[row_data["animal_code"]] = row_data["animal_name"]
@@ -72,8 +68,7 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
                         result_year = result_year,
                         subdistrict_code = row_data["SubDistrictCode"]
                     )
-                #db_cursor.execute(resulting_subdistrict_query)
-                #query_result_ressub = db_cursor.fetchall()
+                
                 try:
                     query_result_ressub = pd.read_sql(resulting_subdistrict_query, db_connection)
                     file_output_dataframe.at[row_index, "Province"] = query_result_ressub.iloc[0]["province_name_th"]
@@ -118,11 +113,10 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
             file_output_dataframe[["จังหวัด", "อำเภอ", "ตำบล", "ค่าความเสี่ยง", "ระดับความเสี่ยง", "ประเภทสัตว์", "จำนวนสัตว์ในตำบล", "ตำบลเริ่มต้น"]].to_csv("test.csv", encoding="utf8")
             excel_writer.save()
             return buffer.getvalue()
-        exit
     except Exception as e:
         print("ERR-INPUTFILE")
-        print(sys.exc_info()[0])
-        print("At line [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
+        print("ERROR OCCURRED: %s" % sys.exc_info()[0])
+        print("AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
         exit
 
 def main(result_type, result_year, email_recipient, subdistrict_list):
@@ -187,8 +181,8 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
         print("OK")
     except Exception:
         print("ERR-EMAIL")
-        print(sys.exc_info())
-        print("At line [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
+        print("ERROR OCCURRED: %s" % sys.exc_info())
+        print("AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
 
 if __name__ == "__main__":
     import argparse
@@ -197,8 +191,20 @@ if __name__ == "__main__":
     parser.add_argument("result_type", metavar="ประเภทการวิเคราะห์", type=str, help="\{ASF, FMD, HPAI, NIPAH\}")
     parser.add_argument("result_year", metavar="ผลการวิเคราะห์สำหรับปี", type=str, help="ปีในรูปแบบคริสต์ศักราช")
     parser.add_argument("email_recipient", metavar="", type=str, help="")
-    parser.add_argument("subdistrict_list", metavar="", type=str, help="")
+    parser.add_argument("subdistrict_list_filename", metavar="", type=str, help="")
 
-    #args = parser.parse_args()
+    args = parser.parse_args()
+    #beg+++eKS09.05.2019 Workaround for long subdistrict list selection(>1000 starting subdistricts)
     #main(args.result_type, args.result_year, args.email_recipient, args.subdistrict_list)
-    main("FMD", "2017", "k.sutassananon@gmail.com", "130203-220503")
+    subdistrict_string = ""
+    
+    with open("../temp/" + args.subdistrict_list_filename) as file:
+        current_line = file.read()
+        subdistrict_string = subdistrict_string + current_line
+
+    main(args.result_type, args.result_year, args.email_recipient, subdistrict_string)
+    #end+++eKS09.05.2019 Workaround for long subdistrict list selection(>1000 starting subdistricts)
+
+    import os
+    os.remove("../temp/" + args.subdistrict_list_filename)
+    #main("ASF", "2017", "k.sutassananon@gmail.com", "130203-220503")
