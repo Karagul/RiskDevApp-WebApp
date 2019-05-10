@@ -95,15 +95,12 @@ def file_process_population(filepath, result_type, result_year, subdistrict_list
 
         # Parsing the selected data into CSV output buffer
         with io.BytesIO() as buffer:
-            #file_output_dataframe[["จังหวัด", "อำเภอ", "ตำบล", "ระดับความเสี่ยง", "จำนวนสัตว์ในตำบล", "ตำบลเริ่มต้น"]].to_csv(buffer, index=False, encoding="utf8")
             excel_writer = pd.ExcelWriter(buffer)
             file_output_dataframe[["จังหวัด", "อำเภอ", "ตำบล", "ค่าความเสี่ยง", "ระดับความเสี่ยง", "ประเภทสัตว์", "จำนวนสัตว์ในตำบล", "ตำบลเริ่มต้น"]].to_excel(excel_writer, index=False, encoding="utf8", merge_cells=True)
             excel_writer.save()
             return buffer.getvalue()
     except:
-        print("ERR-INPUTFILE")
-        print("ERROR OCCURRED: %s" % sys.exc_info()[0])
-        print("AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
+        print("ERR-INPUTFILE AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
         exit
 
 def main(result_type, result_year, email_recipient, subdistrict_list):
@@ -113,8 +110,6 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
         file_input_location = "C:/WebApp/eSmart/RiskDevApp-WebApp/results/Population_nipah_" + result_year + ".csv"
     else:
         file_input_location = "C:/WebApp/eSmart/RiskDevApp-WebApp/results/Population_" + result_type + "_" + result_year + ".csv"
-    
-    file_input_location = "~/Repositories/RiskDevApp-WebApp/results/Population_" + result_type + "_" + result_year + ".csv"
 
     email_attachment_file = file_process_population(file_input_location, result_type, result_year, subdistrict_list)
     email_attachment_name = "RESULT_{result_type}_{timestamp}.xlsx".format(
@@ -170,9 +165,8 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
             smtp_instance.quit()
         print("OK")
     except Exception:
-        print("ERR-EMAIL")
-        print("ERROR OCCURRED: %s" % sys.exc_info())
-        print("AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
+        #print("ERR-EMAIL AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
+        print(sys.exc_info()[1])
 
 if __name__ == "__main__":
     import argparse
