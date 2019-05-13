@@ -12,7 +12,8 @@ function user_add($return_type) {
     // Preparing default values
     $user_password   = base64_encode($_POST["user_name"]);
     $valid_from_date = date("Y-m-d");
-    $valid_to_date   = "9999-12-31";
+    //$valid_to_date   = "9999-12-31";
+    $valid_to_date   = date("Y-m-d", strtotime($_POST["valid_to"]));
 
     // Checking Username Validity
     $user_check_query = $db_conn->prepare("SELECT *

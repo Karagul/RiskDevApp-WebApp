@@ -15,6 +15,7 @@ function user_get_list($bool_return_json) {
 
         foreach($user_account_result as $system_param_single) {
             array_push($user_account_array, ["user_name"  => $system_param_single["user_name"], 
+                                             "type_name"  => $system_param_single["user_type_name"],
                                              "type_desc"  => $system_param_single["user_type_desc"],
                                              "valid_from" => $system_param_single["valid_from_date"],
                                              "valid_to"   => $system_param_single["valid_to_date"]]);

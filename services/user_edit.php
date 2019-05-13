@@ -26,8 +26,9 @@ function user_edit($return_type) {
     }
 
     // Editing this user
-    $user_edit_query = $db_conn->prepare("UPDATE user_account SET user_type_name = :typename WHERE user_name = :username");
+    $user_edit_query = $db_conn->prepare("UPDATE user_account SET user_type_name = :typename, valid_to_date = :validUntil WHERE user_name = :username");
     $user_edit_query->bindValue(":typename", $_POST["user_type"], PDO::PARAM_STR);
+    $user_edit_query->bindValue(":validUntil", date("Y-m-d", strtotime($_POST["valid_to"])), PDO::PARAM_STR);
     $user_edit_query->bindValue(":username", $_POST["user_name"], PDO::PARAM_STR);
     if($user_edit_query->execute()) {
         // Check edited user

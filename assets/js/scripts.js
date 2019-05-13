@@ -205,9 +205,9 @@ function refresh_user_list() {
                 html += '   <td class="bg-secondary text-white">' + value.user_name + '</td>';
                 html += '   <td>' + value.type_desc + '</td>';
                 html += '   <td>' + value.valid_from + '</td>';
-                html += '   <td>' + value.valid_to + '</td>';
+                html += '   <td>' + moment(value.valid_to).format("D MMM YYYY") + '</td>';
                 html += '   <td>';
-                html += '       <button type="button" class="btn btn-sm btn-warning" onclick="modal_user_toggle(\'edit\', \'' + value.user_name +'\')"><i class="fas fa-fw fa-edit mr-2"></i>แก้ไข</button>';
+                html += '       <button type="button" class="btn btn-sm btn-warning" onclick="modal_user_toggle(\'edit\', \'' + value.user_name +'\', \'' + value.type_name + '\', \'' + value.valid_to + '\')"><i class="fas fa-fw fa-edit mr-2"></i>แก้ไข</button>';
                 html += '       <button type="button" class="btn btn-sm btn-danger" onclick="modal_user_action(\'delete\', \'' + value.user_name + '\')"><i class="fas fa-fw fa-trash-alt mr-2"></i>ลบ</button>';
                 html += '   </td>';
                 html += '</tr>';
@@ -296,13 +296,16 @@ function modal_param_action(action) {
 }
 
 // Modal Toggling Handler: User
-function modal_user_toggle(action, username) {
+function modal_user_toggle(action, username, usertype, validto) {
+    validto = moment(validto).format("D MMM YYYY");
+
     switch(action) {
         case "add": 
             $("#modal-user-input-username").prop("disabled", false);
             $("#modal-user .modal-title").html("เพิ่มบัญชีผู้ใช้");
             $("#modal-user .btn-success").show();
             $("#modal-user .btn-warning").hide();
+            $("#modal-user-input-validuntil").val(validto);
             $("#modal-user").modal("toggle");
             break;
         case "edit":
@@ -312,6 +315,8 @@ function modal_user_toggle(action, username) {
             $("#modal-user .btn-success").hide();
             $("#modal-user .btn-warning").show();
             $("#modal-user-input-username").val(username);
+            $("#modal-user-input-usertype").val(usertype);
+            $("#modal-user-input-validuntil").val(validto);
             $("#modal-user").modal("toggle");
             break;
     }
@@ -325,6 +330,7 @@ function modal_user_action(action, username) {
                 $.post(current_web_location + "/services/user_add.php", {
                     user_name: $("#modal-user-input-username").val(),
                     user_type: $("#modal-user-input-usertype").val(),
+                    valid_to: $("#modal-user-input-validuntil").val(),
                     return_type: "TEXT"
                 }, function(data, status) {
                     system_display_dialog(data);
@@ -340,6 +346,7 @@ function modal_user_action(action, username) {
                 $.post(current_web_location + "/services/user_edit.php", {
                     user_name: $("#modal-user-input-username").val(),
                     user_type: $("#modal-user-input-usertype").val(),
+                    valid_to: $("#modal-user-input-validuntil").val(),
                     return_type: "TEXT"
                 }, function(data, status) {
                     system_display_dialog(data);

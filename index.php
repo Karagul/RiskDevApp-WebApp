@@ -264,6 +264,11 @@ while($current_year >= $loop_year) {
                                 <label>ประเภทของผู้ใช้:</label>
                                 <select class="form-control custom-select" id="modal-user-input-usertype"></select>
                             </div>
+                            <!-- User: Valid until date -->
+                            <div class="form-group">
+                                <label>ใช้งานได้ถึง:</label>
+                                <input type="date" class="form-control" id="modal-user-input-validuntil">
+                            </div>
                         </form>
                     </div>
                     <div class="modal-footer">
@@ -294,7 +299,7 @@ while($current_year >= $loop_year) {
         <!-- Javascripts -->
         <script src="assets/js/jquery-3.3.1.min.js"></script>
         <script src="assets/js/bootstrap.bundle.min.js"></script>
-        <script src="assets/js/moment.min.js"></script>
+        <script src="assets/js/moment-with-locales.min.js"></script>
         <script src="assets/js/jquery.dm-uploader.js"></script>
         <script src="assets/js/scripts.js"></script>
         <script>
@@ -336,7 +341,7 @@ while($current_year >= $loop_year) {
 					$("#file-upload-container").dmUploader("reset");
                 },
                 onUploadProgress(id, percent) {
-					if(percent % 25 == 0) alert("�����׺˹��: " + percent + " ����ૹ��");
+					if(percent % 25 == 0) alert("�����׺˹��: " + percent + " ����ૹ��");
                 },
                 onUploadSuccess(id, data) {
                     // system_display_dialogue(data);
