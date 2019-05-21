@@ -79,10 +79,14 @@ while($current_year >= $loop_year) {
                                                 <form class="form-inline">
                                                     <label class="mr-2">วิเคราะห์:</label>
                                                     <select class="form-control custom-select mr-2" id="actions-calculation-input-type"></select>
+                                                    <?php
+                                                    /* beg+++dKS21.05.2019 Fixing year selection, per request
                                                     <label class="mr-2">สำหรับปี:</label>
                                                     <select class="form-control custom-select mr-2" id="actions-calculation-input-year">
                                                     <?php foreach($list_year as $year) echo '<option value="'.$year.'">'.$year.'</option>'; ?>
                                                     </select>
+                                                       end+++dKS21.05.2019 Fixing year selection, per request */
+                                                    ?>
                                                     <button type="button" class="btn btn-success" id="actions-calculation-button-execute"><i class="fas fa-fw fa-play-circle mr-2"></i>เริ่มการวิเคราะห์</button>
                                                 </form>
                                             </div>

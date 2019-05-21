@@ -1,7 +1,7 @@
 // Variables
 var current_web_location = "http://164.115.23.67/riskdevapp-webapp";
 //var current_web_location = "http://localhost/riskdevapp-webapp";
-
+var current_year = moment().format("YYYY");
 // General Function: Display System dialog
 function system_display_dialog(message) {
     $("#modal-message .modal-body").html(message);
@@ -376,7 +376,10 @@ function modal_user_action(action, username) {
 $("#actions-calculation-button-execute").click(function() {
     $.post(current_web_location + "/services/execute_python_script.php", {
         type: $("#actions-calculation-input-type").val(),
-        year: $("#actions-calculation-input-year").val(),
+        // beg+++eKS21.05.2019 Fixing year selection, per request
+        // year: $("#actions-calculation-input-year").val(),
+        year: current_year,
+        // end+++eKS21.05.2019 Fixing year selection, per request
         return_type: "TEXT"
     }, function(data, status) {
         alert(data);
