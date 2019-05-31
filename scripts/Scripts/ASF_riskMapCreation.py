@@ -988,22 +988,25 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
                                      AND result_for_year = '2017';"""
             execute_result = pd.read_sql(result_fetch_query, connection)
 
-            result_describe = execute_result["risk_level_final"].describe()
-            result_mean  = result_describe["mean"]
-            result_25q   = result_describe["25%"]
-            result_75q   = result_describe["75%"]
+            result_describe = execute_result["risk_level_final"].describe(percentiles=[.20, .40, .60, .80])
+            result_20p = result_describe["20%"]
+            result_40p = result_describe["40%"]
+            result_60p = result_describe["60%"]
+            result_80p = result_describe["80%"]
 
             for row_index, row_data in execute_result.iterrows():
-                risk_normdist = "N/A"
+                risk_normdist = "0"
 
-                if row_data["risk_level_final"] >= result_75q:
+                if row_data["risk_level_final"] >= result_80p:
                     risk_normdist = "5"
-                elif row_data["risk_level_final"] >= result_mean:
+                elif row_data["risk_level_final"] >= result_60p:
                     risk_normdist = "4"
-                elif row_data["risk_level_final"] >= result_25q:
+                elif row_data["risk_level_final"] >= result_40p:
                     risk_normdist = "3"
-                else:
+                elif row_data["risk_level_final"] >= result_20p:
                     risk_normdist = "2"
+                else:
+                    risk_normdist = "1"
 
                 update_query = """UPDATE execute_result 
                                          SET risk_level_normdist = '{risk_normdist}' 
