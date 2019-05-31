@@ -278,6 +278,7 @@ while($current_year >= $loop_year) {
                     <div class="modal-footer">
                         <button type="button" class="btn btn-success" onclick="modal_user_action('add')">เพิ่มบัญชีผู้ใช้</button>
                         <button type="button" class="btn btn-warning" onclick="modal_user_action('edit')">แก้ไขบัญชีผู้ใช้</button>
+                        <button type="button" class="btn btn-warning" onclick="toggle_password_change()">เปลี่ยนรหัสผ่าน</button>
                         <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">ยกเลิก</button>
                     </div>
                 </div>
@@ -299,6 +300,41 @@ while($current_year >= $loop_year) {
                 </div>
             </div>
         </div>
+
+        <!-- beg+++iKS25.03.2019 Adding Password Change Modal -->
+        <div class="modal fade" tabindex="-2" id="modal-password">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">เปลี่ยนรหัสผ่าน</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form class="validation-password">
+                            <div class="form-group">
+                                <label>แก้ไขรหัสผ่านของผู้ใช้งาน:</label>
+                                <input type="text" class="form-control" id="modal-password-username" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>รหัสผ่านใหม่:</label>
+                                <input type="password" class="form-control" id="modal-password-new" required>
+                                <div class="invalid-feedback text-danger fade">รหัสผ่านไม่ตรงกัน กรุณาแก้ไข</div>
+                            </div>
+                            <div class="form-group">
+                                <label>ยืนยันรหัสผ่านใหม่:</label>
+                                <input type="password" class="form-control" id="modal-password-confirm" required>
+                                <div class="invalid-feedback text-danger fade">รหัสผ่านไม่ตรงกัน กรุณาแก้ไข</div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" onclick="submit_password_change()"><i class="fas fa-fw fa-lock mr-1"></i>เปลี่ยนรหัสผ่าน</button>
+                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">ยกเลิก</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--- end+++iKS25.03.2019 Adding Password Change Modal -->
 
         <!-- Javascripts -->
         <script src="assets/js/jquery-3.3.1.min.js"></script>
@@ -362,12 +398,6 @@ while($current_year >= $loop_year) {
             });
 
             function file_upload_commence() {
-                //beg+++iKS28.01.2019 Adding preliminary file duplication checking (before update)
-                /*
-                if(confirm("ต้องการอัพโหลดไฟล์นี้ใช่หรือไม่")) {
-                    $("#file-upload-container").dmUploader("start");
-                }
-                */
                 $.post(current_web_location + "/services/file_check_duplicate.php", {
                     filename: current_upload_filename
                 }, function(data, status) {
@@ -379,7 +409,6 @@ while($current_year >= $loop_year) {
                             $("#file-upload-container").dmUploader("start");
                     }
                 });
-                //end+++eKS28.01.2019 Adding preliminary file duplication checking (before update)
             }
 
             function file_upload_selection() {

@@ -1,6 +1,5 @@
 // Variables
 var current_web_location = "http://164.115.23.67/riskdevapp-webapp";
-//var current_web_location = "http://localhost/riskdevapp-webapp";
 var current_year = moment().format("YYYY");
 // General Function: Display System dialog
 function system_display_dialog(message) {
@@ -390,3 +389,28 @@ $("#actions-calculation-button-execute").click(function() {
 $("#actions-calculation-display-type").change(function() {
 	refresh_execution_list();
 });
+
+// beg+++iKS31.05.2019 Adding Password Change Modal
+function toggle_password_change() {
+    $("#modal-user").modal("hide");
+    $("#modal-password").modal("show");
+    $("#modal-password-username").val($("#modal-user-input-username").val());
+}
+
+function submit_password_change() {
+    if($("#modal-password-new").val().length == 0 || $("#modal-password-confirm").val().length == 0) {
+        alert("กรุณากรอกรหัสผ่านใหม่ พร้อมยืนยันรหัสผ่าน");
+    } else if($("#modal-password-new").val() != $("#modal-password-confirm").val()) {
+        alert("รหัสผ่านไม่ตรงกัน กรุณาลองอีกครั้ง");
+    } else {
+        $.post(current_web_location + "/services/user_password_change.php", {
+            username: $("#modal-password-username").val(),
+            password: $("#modal-password-confirm").val(),
+            return_type: "TEXT"
+        }, function(data, status) {
+            alert(data);
+            $("#modal-password").modal("hide");
+        });
+    }
+}
+// end+++iKS31.05.2019 Adding Password Change Modal
