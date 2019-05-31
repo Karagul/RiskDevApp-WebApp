@@ -117,56 +117,58 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
         timestamp = datetime.today().strftime('%Y%m%d')
     )
 
+    if email_recipient == "-":
+        # Download the file to the device, instead of sending an e-mail
+        output_file = open("C:/WebApp/eSmart/RiskDevApp-WebApp/results/" + email_attachment_name, "wb")
+        output_file.write(email_attachment_file)
+        output_file.close()
+    else:
     # Sending an email
-    from email.mime.application import MIMEApplication
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-    import smtplib
-    import ssl
+        from email.mime.application import MIMEApplication
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        import smtplib
+        import ssl
 
-    # Email settings
-    email_from          = "dev.riskapp@gmail.com"
-    email_port          = 465 # With SSL enabled
-    email_password      = "riskdevapp2018"
-    email_server        = "smtp.gmail.com"
-    email_to            = email_recipient
+        # Email settings
+        email_from          = "dev.riskapp@gmail.com"
+        email_port          = 465 # With SSL enabled
+        email_password      = "riskdevapp2018"
+        email_server        = "smtp.gmail.com"
+        email_to            = email_recipient
 
-    try:
-        # Creating an email
-        email_message_main  = MIMEMultipart()
-        email_message_main["Subject"] = "[RISKAPP] ผลการวิเคราะห์ความเสี่ยงของโรค " + result_type
-        email_message_main["From"]    = email_from
-        email_message_main["To"]      = email_to
+        try:
+            # Creating an email
+            email_message_main  = MIMEMultipart()
+            email_message_main["Subject"] = "[RISKAPP] ผลการวิเคราะห์ความเสี่ยงของโรค " + result_type
+            email_message_main["From"]    = email_from
+            email_message_main["To"]      = email_to
 
-        # Email content: message
-        email_message_html  = """\
-        <html>
-            <body>
-                <h4>Requested data has been exported from the RiskApp system</h4>
-                <p>Please see the attached file for further detail.</p>
-                <p>Best regards,<br />RiskApp Team</p>
-            </body>
-        </html>
-        """
-        email_message_main.attach(MIMEText(email_message_html, "html"))
+            # Email content: message
+            email_message_html  = """\
+            <html>
+                <body>
+                    <h4>Requested data has been exported from the RiskApp system</h4>
+                    <p>Please see the attached file for further detail.</p>
+                    <p>Best regards,<br />RiskApp Team</p>
+                </body>
+            </html>
+            """
+            email_message_main.attach(MIMEText(email_message_html, "html"))
 
-        # Email content: 
-        #attachment_result_csv = MIMEApplication(email_attachment_file.encode("utf-8"))
-        #attachment_result_csv["Content-Disposition"] = "attachment; filename={}".format(email_attachment_name)
-        #email_message_main.attach(attachment_result_csv)
-        attachment_result_excel = MIMEApplication(email_attachment_file)
-        attachment_result_excel["Content-Disposition"] = "attachment; filename={}".format(email_attachment_name)
-        email_message_main.attach(attachment_result_excel)
-
-        email_context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(email_server, email_port, context=email_context) as smtp_instance:
-            smtp_instance.login(email_from, email_password)
-            smtp_instance.sendmail(email_message_main["From"], email_message_main["To"], email_message_main.as_string())
-            smtp_instance.quit()
-        print("OK")
-    except Exception:
-        #print("ERR-EMAIL AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
-        print(sys.exc_info()[1])
+            # Email content: 
+            attachment_result_excel = MIMEApplication(email_attachment_file)
+            attachment_result_excel["Content-Disposition"] = "attachment; filename={}".format(email_attachment_name)
+            email_message_main.attach(attachment_result_excel)
+            email_context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(email_server, email_port, context=email_context) as smtp_instance:
+                smtp_instance.login(email_from, email_password)
+                smtp_instance.sendmail(email_message_main["From"], email_message_main["To"], email_message_main.as_string())
+                smtp_instance.quit()
+            print("OK")
+        except Exception:
+            #print("ERR-EMAIL AT LINE [{lineno}]".format(lineno = sys.exc_info()[2].tb_lineno))
+            print(sys.exc_info()[1])
 
 if __name__ == "__main__":
     import argparse
