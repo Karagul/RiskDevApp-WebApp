@@ -2,17 +2,11 @@
 import csv
 import datetime
 import pandas as pd
-#import pyodbc
-import pymysql
+import pyodbc
+import sys
 from os import listdir
 
-connection = pymysql.connect(host="localhost",
-                             user="riskdevapp",
-                             password="riskdevapp",
-                             db="riskdevapp",
-                             charset="utf8mb4",
-                             cursorclass=pymysql.cursors.DictCursor)
-#connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
+connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
 try:
     current_result_year = "2017"
     for current_result_type in ["ASF", "FMD", "HPAI", "NIPAH"]:
@@ -60,7 +54,8 @@ try:
                                        starting_subdistrict_code = row_data["starting_subdistrict_code"],
                                        resulting_subdistrict_code = row_data["resulting_subdistrict_code"]
                                    )
-                cursor.execute()
+                cursor.execute(update_sql)
             connection.commit()
 except:
+    print(sys.exc_info())
     print("Died")

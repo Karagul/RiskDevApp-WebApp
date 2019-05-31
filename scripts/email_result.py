@@ -122,6 +122,7 @@ def main(result_type, result_year, email_recipient, subdistrict_list):
         output_file = open("C:/WebApp/eSmart/RiskDevApp-WebApp/results/" + email_attachment_name, "wb")
         output_file.write(email_attachment_file)
         output_file.close()
+        print("OK")
     else:
     # Sending an email
         from email.mime.application import MIMEApplication
