@@ -100,7 +100,7 @@ if($param_list_query->execute()) {
 
 switch($_POST["type"]) {
     case "ASF": 
-        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value ASF";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\ASF_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value ASF";
         break;
     case "FMD": 
         $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\FMD_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
@@ -109,7 +109,7 @@ switch($_POST["type"]) {
         $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\HPAI_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
         break;
     case "NIPAH": 
-        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\ASF_NIPAH_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value NIPAH";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\NIPAH_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value NIPAH";
         break;
 }
 $python_output = exec($python_script." 2>&1");
