@@ -896,6 +896,9 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
         # Main process
         print('Beta: {0}    Gamma : {1}    Sigma: {2}'.format(beta,1/gamma,1/sigma))
         modelProcess(initNodes,pigPop,weekPath,emovementPath,initialNodePath,cleanUpPeriod,sirModelPath,beta,1/gamma,1/sigma,inputFolder,outPutFolder,workingDirectory,saveFolder,maxLoop)
+        #beg+++iKS05.06.2019 Adding progress update
+        updateRunProgress(i)
+        #end+++iKS05.06.2019 Adding progress update
 
     from os import listdir
     from os.path import isfile, join
@@ -977,6 +980,10 @@ def Model100Iterations(workingDirectory, maxIterations, cleanUpPeriod, beta, gam
                         riskLevel = row[1]
                     )
                     cursor.execute(insertQuery)
+
+            # Delete invalidated records and pending records
+            delete_query = "DELETE FROM execute_result WHERE execute_type_name = 'ASF' AND execute_status_name IN ('INVALID', 'PENDING', 'PROCESSING')"
+            cursor.execute()
         connection.commit()
 
         # Then, update with the normal distribution calculation
@@ -1116,3 +1123,20 @@ if __name__ == "__main__":
     
     # python riskMapCreation.py D:/RiskApp/SourceCode 14 10 0.5 6.5
     # python riskMapCreation.py D:/RiskApp/SourceCode 0 10 0.5
+
+def updateRunProgress(percentage):
+    import pyodbc
+
+    try:
+        connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=riskdevapp;UID=riskdevapp;PWD=riskdevapp2018')
+        with connection.cursor() as cursor:
+            if percentage == 1:
+                progress_update_query = "UPDATE execute_result SET execute_status_name = PROCESSING' WHERE execute_type_name = 'ASF' AND execute_type_name = 'PENDING'"
+            else:
+                progress_update_query = "UPDATE execute_result SET execute_status_name = '{progress_string}' WHERE execute_type_name = 'ASF' AND (execute_type_name LIKE '%COMPLETED')".format(
+                    progress_string = str(percentage) + "% COMPLETED"
+                )
+            cursor.execute(progress_update_query)
+        connection.commit()
+    except:
+        print("Could not update the progress")

@@ -32,6 +32,7 @@ if(isset($_POST["type"])) {
 } else die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-2)");
 
 // Input validation: Execution for year
+$_POST["year"] = "2017";
 if(isset($_POST["year"])) {
     try {
         $year_value = intval($_POST["year"]);
@@ -42,10 +43,23 @@ if(isset($_POST["year"])) {
 } else die("ไม่สามารถสั่งประมวลผลข้อมูลได้ กรุณาติดต่อผู้ดูแลระบบ (Code: EXEC-3)");
 
 // Clearing any previous runs with the same execution type
-$clear_previous_run_query = $db_conn->prepare("DELETE FROM execute_result
-                                                WHERE execute_type_name = :executeType");
-$clear_previous_run_query->bindValue(":executeType", $_POST["type"], PDO::PARAM_STR);
-$clear_previous_run_query->execute();
+// $clear_previous_run_query = $db_conn->prepare("DELETE FROM execute_result
+                                                // WHERE execute_type_name = :executeType");
+// $clear_previous_run_query->bindValue(":executeType", $_POST["type"], PDO::PARAM_STR);
+// $clear_previous_run_query->execute();
+$invalidate_previous_run_query = $db_conn->prepare("UPDATE execute_result SET execute_status_name = 'INVALID' WHERE execute_type_name = :executeType");
+$invalidate_previous_run_query->bindValue(":executeType", $_POST["type"], PDO::PARAM_STR);
+$invalidate_previous_run_query->execute();
+
+// ========== BEGIN OF Execution Logging ==========
+$insert_log_query = $db_conn->prepare("INSERT INTO execute_result VALUES(:epidemicType, :resultYear, :currentDate, :currentUser,
+                                                                       'PENDING', '', '', 0, 0)");
+$insert_log_query->bindValue("epidemicType", $_POST["type"], PDO::PARAM_STR);
+$insert_log_query->bindValue(":resultYear", $_POST["year"], PDO::PARAM_STR);
+$insert_log_query->bindValue(":currentDate", date("Y-m-d"), PDO::PARAM_STR);
+$insert_log_query->bindValue(":currentUser", $_SESSION["user_name"], PDO::PARAM_STR);
+if(!$insert_log_query->execute()) die("ไม่สามารถบันทึกการวิเคราะห์ได้ กรุณาติดต่อผู้ดูแลระบบ");
+// ========== END   OF Execution Logging ==========
 
 // ========== BEGIN OF Calculating the Python Model ==========
 // Parameter Settings
@@ -100,7 +114,7 @@ if($param_list_query->execute()) {
 
 switch($_POST["type"]) {
     case "ASF": 
-        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\ASF_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value ASF";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\ASF_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
         break;
     case "FMD": 
         $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\FMD_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
@@ -109,20 +123,10 @@ switch($_POST["type"]) {
         $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\HPAI_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
         break;
     case "NIPAH": 
-        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\NIPAH_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value NIPAH";
+        $python_script = "$python_bin ".dirname(__FILE__)."\\..\\scripts\\Scripts\\NIPAH_riskMapCreation.py ".dirname(__FILE__)."\\..\\results $cleanup_stage $beta_value $gamma_value $sigma_value";
         break;
 }
-$python_output = exec($python_script." 2>&1");
-die("===== Using $python_version =====\n$python_output\nสั่งการประมวลผลแล้ว กรุณารอสักครู่");
+echo "===== Using $python_version =====\nสั่งการประมวลผลแล้ว กรุณารอสักครู่";
+$python_output = exec($python_script);
 // ========== END   OF Calculating the Python Model ==========
-
-// ========== BEGIN OF Execution Logging ==========
-/*$insert_log_query = $db_conn->prepare("INSERT INTO execute_result VALUES(:epidemicType, :currentDate, :currentUser,
-                                                                       'PENDING', :executeFirstDate, '', '', 0, 0)");
-$insert_log_query->bindValue("epidemicType", $_POST["type"], PDO::PARAM_STR);
-$insert_log_query->bindValue(":currentDate", date("Y-m-d"), PDO::PARAM_STR);
-$insert_log_query->bindValue(":currentUser", $_SESSION["user_name"], PDO::PARAM_STR);
-$insert_log_query->bindValue(":resultForYear", $_POST["year"], PDO::PARAM_STR);
-if(!$insert_log_query->execute()) die("ไม่สามารถบันทึกการวิเคราะห์ได้ กรุณาติดต่อผู้ดูแลระบบ");*/
-// ========== END   OF Execution Logging ==========
 ?>
